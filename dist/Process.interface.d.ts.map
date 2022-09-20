@@ -1,1 +1,1 @@
-{"version":3,"file":"Process.interface.d.ts","sourceRoot":"","sources":["../src/Process.interface.ts"],"names":[],"mappings":"AAAA,MAAM,WAAW,gBAAgB;IAC7B,GAAG,CAAE,UAAU,EAAE,OAAO,GAAG,OAAO,CAAC,IAAI,CAAC,CAAA;CAC3C"}
+{"version":3,"file":"Process.interface.d.ts","sourceRoot":"","sources":["../src/Process.interface.ts"],"names":[],"mappings":"AAAA,MAAM,WAAW,gBAAgB,CAAC,SAAS,GAAG,OAAO;IACjD,GAAG,CAAE,UAAU,EAAE,OAAO,GAAG,OAAO,CAAC,IAAI,CAAC,CAAA;IACxC,eAAe,CAAC,gBAAgB,GAAG,SAAS,GAAC,IAAI,KAAM,gBAAgB,GAAC,IAAI,CAAA;CAC/E"}

@@ -4,6 +4,7 @@ import { EventEmitter } from 'events';
 import { ProcessStateProviderInterface } from './ProcessStateProvider.interface';
 import { ProcessingState } from './ProcessingState.enum';
 import { ProcessStepStateInterface } from './ProcessStepState.interface';
+import { ProcessInterface } from './Process.interface';
 /**
  * @classdesc Generic class representing parent class containing  steps which should be working on.
  * @extends EventEmitter
@@ -25,16 +26,17 @@ import { ProcessStepStateInterface } from './ProcessStepState.interface';
 }
 *
  */
-export declare abstract class GenericProcess<inputType = null> extends EventEmitter {
+export declare abstract class GenericProcess<inputType = unknown> extends EventEmitter implements ProcessInterface {
     readonly processName: string;
     protected readonly stepStateProvider: ProcessStateProviderInterface;
-    protected input: inputType | null;
+    protected readonly processedInput: inputType | null;
     protected _processingState: ProcessingState;
     protected _stepStates: ProcessStepStateInterface[];
     protected _error: string | null;
     protected _steps: Array<StepInterface<unknown> | ArrayItemStepInterface<unknown>>;
-    constructor(processName: string, steps: Array<StepInterface<unknown> | ArrayItemStepInterface<unknown>>, stepStateProvider: ProcessStateProviderInterface);
+    constructor(processName: string, steps: Array<StepInterface<unknown> | ArrayItemStepInterface<unknown>>, stepStateProvider: ProcessStateProviderInterface, processedInput?: inputType | null);
     get steps(): Array<StepInterface<unknown> | ArrayItemStepInterface<unknown>>;
+    getProcessInput<processedInputType = inputType | null>(): processedInputType | null;
     setSteps(steps: Array<StepInterface<unknown> | ArrayItemStepInterface<unknown>>): void;
     getStepState(stepName: string): Promise<ProcessStepStateInterface | ProcessStepStateInterface[] | null>;
     protected checkStepsValidity(): void;

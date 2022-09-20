@@ -1,3 +1,4 @@
+import { ProcessInterface } from './Process.interface';
 import { ProcessStepStateInterface } from './ProcessStepState.interface';
 export interface StepInterface<stateType> {
     get stepName(): string;
@@ -12,6 +13,7 @@ export interface StepInterface<stateType> {
     onSuccess(state: stateType | null): void;
     onSkipped(): void;
     onError(errorMessage: string): void;
+    setProcessReference(process: ProcessInterface): void;
 }
 export interface ArrayItemStepInterface<stateType> extends StepInterface<stateType> {
     get itemIdentifier(): string;

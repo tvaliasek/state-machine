@@ -7,6 +7,7 @@ exports.GenericStep = void 0;
  */
 class GenericStep {
     constructor(stepName, state = null, dependsOn = [], success = false, skipped = false, error = null) {
+        this._process = null;
         this._stepName = stepName;
         this._state = state;
         this._dependsOn = dependsOn;
@@ -35,6 +36,12 @@ class GenericStep {
     }
     get stateOfDependencies() {
         return this._stateOfDependencies;
+    }
+    get process() {
+        return this._process;
+    }
+    setProcessReference(process) {
+        this._process = process;
     }
     getStepResult() {
         var _a;

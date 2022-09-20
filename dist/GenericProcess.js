@@ -34,11 +34,11 @@ const ProcessingState_enum_1 = require("./ProcessingState.enum");
 *
  */
 class GenericProcess extends events_1.EventEmitter {
-    constructor(processName, steps, stepStateProvider) {
+    constructor(processName, steps, stepStateProvider, processedInput = null) {
         super();
         this.processName = processName;
         this.stepStateProvider = stepStateProvider;
-        this.input = null;
+        this.processedInput = processedInput;
         this._processingState = ProcessingState_enum_1.ProcessingState.Idle;
         this._stepStates = [];
         this._error = null;
@@ -48,6 +48,9 @@ class GenericProcess extends events_1.EventEmitter {
     }
     get steps() {
         return this._steps;
+    }
+    getProcessInput() {
+        return this.processedInput;
     }
     setSteps(steps) {
         if (this._processingState === ProcessingState_enum_1.ProcessingState.Running) {
@@ -161,6 +164,8 @@ class GenericProcess extends events_1.EventEmitter {
             for (const step of this._steps) {
                 // check common interface
                 if (this.implementsStepInterface(step)) {
+                    // add reference to current process
+                    step.setProcessReference(this);
                     // check if step is array item step type
                     const isArrayStep = this.implementsArrayItemStepInterface(step);
                     try {
