@@ -61,6 +61,10 @@ describe('GenericProcess basic implementation', () => {
         expect(process.error).toBe('I was born to fail.')
     })
 
+    test('can get input', async () => {
+        expect(process.getProcessInput()).toEqual({ processedInputId: 'someId' })
+    })
+
     test('setSteps', async () => {
         const longStep = new LongStep('l1')
         const process = new Process('foo', [ longStep ], new StepStateProvider())

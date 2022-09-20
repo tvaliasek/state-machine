@@ -55,6 +55,17 @@ There are several basic abstract classes to extend from.
 #### GenericProcess
 This is the main class containing all the logic needed to run all steps, validate and resolve their dependencies and retrieve and save step states. If you do not need anything custom, you can simply extend it.
 
+You can pass the processed input as the last parameter of the constructor. Then the input will be accessible from all the steps via a process reference (`this.process.getProcessedInput()`). 
+
+The generic class is an event emitter, so you can listen for events:
+
+| event | data | description | 
+|-------|------|-------------|
+| `start` | `{ processName: string }` | emitted on start of run |
+| `step-done` | `{ processName: string, stepName: string, itemIdentifier: string|null, state: ProcessStepStateInterface } ` | emitted after successful doWork method call |
+| `step-error` | `{ processName: string, stepName: string, itemIdentifier: string|null, error: Error } ` | emitted when any error is thrown from doWork method |
+| `done` | `{ processName: string }` | emitted on end of run |
+
 *Example:*
 
 ``` ts
@@ -65,6 +76,10 @@ class Process extends GenericProcess {}
 
 #### GenericStep
 Abstract class representing common step. You can customize inner logic to your needs, but you must implement at least doWork method. And you probably want to customize shouldRun method. Its state is maintained by combination of process name and step name.
+
+If you define a dependency on the successful execution of the other steps (third constructor parameter), you can access it from context property on `this.stateOfDependencies`. This property contains `Map<stringNameOfStep, ProcessStepStateInterface|ProcessStepStateInterface[]>`.
+
+You can also access the process on context property `this.process`.
 
 *Example:*
 

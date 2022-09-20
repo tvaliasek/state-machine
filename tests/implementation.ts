@@ -101,8 +101,8 @@ export class StepStateProvider {
     }
 }
 
-export const processFactory = (state: InternalState, steps: Array<Step|ArrayItemStep>): Process => {
-    return new Process('process', steps, new StepStateProvider(state))
+export const processFactory = (state: InternalState, steps: Array<Step|ArrayItemStep>, input: Record<string, any> = { processedInputId: 'someId' }): Process => {
+    return new Process('process', steps, new StepStateProvider(state), input)
 }
 
 export const defaultState = [

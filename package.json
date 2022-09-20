@@ -12,7 +12,8 @@
     "typescript",
     "state",
     "machine",
-    "generic"
+    "generic",
+    "framework"
   ],
   "repository": "https://github.com/tvaliasek/state-machine",
   "author": "tvaliasek",

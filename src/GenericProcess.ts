@@ -3,6 +3,7 @@ import { EventEmitter } from 'events'
 import { ProcessStateProviderInterface } from './ProcessStateProvider.interface'
 import { ProcessingState } from './ProcessingState.enum'
 import { ProcessStepStateInterface } from './ProcessStepState.interface'
+import { ProcessInterface } from './Process.interface'
 
 /**
  * @classdesc Generic class representing parent class containing  steps which should be working on.
@@ -25,8 +26,7 @@ import { ProcessStepStateInterface } from './ProcessStepState.interface'
 }
 *
  */
-export abstract class GenericProcess<inputType = null> extends EventEmitter {
-    protected input: inputType|null = null
+export abstract class GenericProcess<inputType = unknown> extends EventEmitter implements ProcessInterface {
     protected _processingState: ProcessingState = ProcessingState.Idle
     protected _stepStates: ProcessStepStateInterface[] = []
     protected _error: string|null = null
@@ -35,7 +35,8 @@ export abstract class GenericProcess<inputType = null> extends EventEmitter {
     constructor (
         public readonly processName: string,
         steps: Array<StepInterface<unknown>|ArrayItemStepInterface<unknown>>,
-        protected readonly stepStateProvider: ProcessStateProviderInterface
+        protected readonly stepStateProvider: ProcessStateProviderInterface,
+        protected readonly processedInput: inputType|null = null
     ) {
         super()
         this._steps = steps
@@ -45,6 +46,10 @@ export abstract class GenericProcess<inputType = null> extends EventEmitter {
 
     get steps (): Array<StepInterface<unknown>|ArrayItemStepInterface<unknown>> {
         return this._steps
+    }
+
+    getProcessInput<processedInputType = inputType|null> (): processedInputType|null {
+        return this.processedInput as processedInputType|null
     }
 
     public setSteps (steps: Array<StepInterface<unknown>|ArrayItemStepInterface<unknown>>): void {
@@ -171,6 +176,8 @@ export abstract class GenericProcess<inputType = null> extends EventEmitter {
         for (const step of this._steps) {
             // check common interface
             if (this.implementsStepInterface(step)) {
+                // add reference to current process
+                step.setProcessReference(this)
                 // check if step is array item step type
                 const isArrayStep = this.implementsArrayItemStepInterface(step)
                 try {

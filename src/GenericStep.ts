@@ -1,3 +1,4 @@
+import { ProcessInterface } from './Process.interface'
 import { ProcessStepStateInterface } from './ProcessStepState.interface'
 
 /**
@@ -12,6 +13,7 @@ export abstract class GenericStep<stateType> {
     protected _skipped: boolean
     protected _error: null|string
     protected _stateOfDependencies: Map<string, unknown>
+    protected _process: ProcessInterface|null = null
 
     constructor (
         stepName: string,
@@ -56,6 +58,14 @@ export abstract class GenericStep<stateType> {
 
     get stateOfDependencies (): Map<string, unknown> {
         return this._stateOfDependencies
+    }
+
+    get process (): ProcessInterface|null {
+        return this._process
+    }
+
+    setProcessReference (process: ProcessInterface) {
+        this._process = process
     }
 
     getStepResult (): ProcessStepStateInterface {
