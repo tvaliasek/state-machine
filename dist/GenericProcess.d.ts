@@ -60,5 +60,10 @@ export declare abstract class GenericProcess<inputType = unknown> extends EventE
      * @param throwError optional param which says whether to throw an exception
      */
     run(throwError?: boolean): Promise<void>;
+    /**
+     * @description This method is used to run only specific step of process.
+     * @param throwError optional param which says whether to throw an exception
+     */
+    runStep(stepName: string, itemIdentifier?: string | number | null, throwError?: boolean): Promise<ProcessStepStateInterface | null>;
 }
 //# sourceMappingURL=GenericProcess.d.ts.map

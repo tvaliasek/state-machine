@@ -215,6 +215,55 @@ class GenericProcess extends events_1.EventEmitter {
             this.emit('done', { processName: this.processName });
         });
     }
+    /**
+     * @description This method is used to run only specific step of process.
+     * @param throwError optional param which says whether to throw an exception
+     */
+    runStep(stepName, itemIdentifier = null, throwError = false) {
+        return __awaiter(this, void 0, void 0, function* () {
+            for (const step of this._steps) {
+                // check common interface
+                if (this.implementsStepInterface(step)) {
+                    // check if step is array item step type
+                    const isArrayStep = this.implementsArrayItemStepInterface(step);
+                    if (step.stepName === stepName &&
+                        (!isArrayStep || (isArrayStep && step.itemIdentifier === itemIdentifier))) {
+                        // add reference to current process
+                        step.setProcessReference(this);
+                        try {
+                            // load previous state from db / another source
+                            const stepState = yield this.stepStateProvider.getStepState(this.processName, step.stepName, ((isArrayStep) ? step.itemIdentifier : null));
+                            // hydrate previous state, if there is any
+                            if (stepState) {
+                                step.setInitialState(stepState);
+                            }
+                            // resolve and hydrate dependency datasets
+                            if (step.dependsOn.length > 0) {
+                                const dependenciesStates = yield this.resolveStepDependencies(step.dependsOn);
+                                step.setStateOfDependencies(dependenciesStates);
+                            }
+                            // perform unit of work
+                            const state = yield step.doWork();
+                            // save unit of work result
+                            yield this.stepStateProvider.setStepState(this.processName, step.stepName, ((isArrayStep) ? step.itemIdentifier : null), state);
+                            return step.getStepResult();
+                        }
+                        catch (error) {
+                            this._processingState = ProcessingState_enum_1.ProcessingState.Failed;
+                            this._error = (error instanceof Error) ? error.message : `${error}`;
+                            // save error state of step
+                            yield this.stepStateProvider.setStepState(this.processName, step.stepName, ((isArrayStep) ? step.itemIdentifier : null), step.getStepResult());
+                            if (throwError) {
+                                throw error;
+                            }
+                            return step.getStepResult();
+                        }
+                    }
+                }
+            }
+            return null;
+        });
+    }
 }
 exports.GenericProcess = GenericProcess;
 //# sourceMappingURL=GenericProcess.js.map

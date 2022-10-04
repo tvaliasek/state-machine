@@ -239,4 +239,67 @@ export abstract class GenericProcess<inputType = unknown> extends EventEmitter i
         }
         this.emit('done', { processName: this.processName })
     }
+
+    /**
+     * @description This method is used to run only specific step of process.
+     * @param throwError optional param which says whether to throw an exception
+     */
+    async runStep (stepName: string, itemIdentifier: string|number|null = null, throwError = false): Promise<ProcessStepStateInterface|null> {
+        for (const step of this._steps) {
+            // check common interface
+            if (this.implementsStepInterface(step)) {
+                // check if step is array item step type
+                const isArrayStep = this.implementsArrayItemStepInterface(step)
+                if (
+                    step.stepName === stepName &&
+                    (!isArrayStep || (isArrayStep && step.itemIdentifier === itemIdentifier))
+                ) {
+                    // add reference to current process
+                    step.setProcessReference(this)
+                    try {
+                        // load previous state from db / another source
+                        const stepState = await this.stepStateProvider.getStepState(
+                            this.processName,
+                            step.stepName,
+                            ((isArrayStep) ? step.itemIdentifier : null)
+                        )
+                        // hydrate previous state, if there is any
+                        if (stepState) {
+                            step.setInitialState(stepState)
+                        }
+                        // resolve and hydrate dependency datasets
+                        if (step.dependsOn.length > 0) {
+                            const dependenciesStates = await this.resolveStepDependencies(step.dependsOn)
+                            step.setStateOfDependencies(dependenciesStates)
+                        }
+                        // perform unit of work
+                        const state = await step.doWork()
+                        // save unit of work result
+                        await this.stepStateProvider.setStepState(
+                            this.processName,
+                            step.stepName,
+                            ((isArrayStep) ? step.itemIdentifier : null),
+                            state
+                        )
+                        return step.getStepResult()
+                    } catch (error) {
+                        this._processingState = ProcessingState.Failed
+                        this._error = (error instanceof Error) ? error.message : `${error}`
+                        // save error state of step
+                        await this.stepStateProvider.setStepState(
+                            this.processName,
+                            step.stepName,
+                            ((isArrayStep) ? step.itemIdentifier : null),
+                            step.getStepResult()
+                        )
+                        if (throwError) {
+                            throw error
+                        }
+                        return step.getStepResult()
+                    }
+                }
+            }
+        }
+        return null
+    }
 }
