@@ -241,7 +241,6 @@ export abstract class GenericProcess<inputType = unknown> extends EventEmitter i
     }
 
     /**
-     *
      * This method is used to run only specific step of process.
      * @param {string} stepName name of step
      * @param {(string|number|null)} [itemIdentifier=null] identifier of specific item in case of array item step
