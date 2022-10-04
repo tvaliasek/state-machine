@@ -241,8 +241,13 @@ export abstract class GenericProcess<inputType = unknown> extends EventEmitter i
     }
 
     /**
-     * @description This method is used to run only specific step of process.
-     * @param throwError optional param which says whether to throw an exception
+     *
+     * This method is used to run only specific step of process.
+     * @param {string} stepName name of step
+     * @param {(string|number|null)} [itemIdentifier=null] identifier of specific item in case of array item step
+     * @param {boolean} [throwError=false] optional param which says whether to throw an exception
+     * @returns {(Promise<ProcessStepStateInterface|null>)}
+     * @memberof GenericProcess
      */
     async runStep (stepName: string, itemIdentifier: string|number|null = null, throwError = false): Promise<ProcessStepStateInterface|null> {
         for (const step of this._steps) {
