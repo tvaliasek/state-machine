@@ -220,6 +220,13 @@ export abstract class GenericProcess<inputType = unknown> extends EventEmitter i
                     })
                     this._processingState = ProcessingState.Failed
                     this._error = (error instanceof Error) ? error.message : `${error}`
+                    // save error state of step
+                    await this.stepStateProvider.setStepState(
+                        this.processName,
+                        step.stepName,
+                        ((isArrayStep) ? step.itemIdentifier : null),
+                        step.getStepResult()
+                    )
                     if (throwError) {
                         throw error
                     }

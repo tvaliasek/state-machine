@@ -200,6 +200,8 @@ class GenericProcess extends events_1.EventEmitter {
                         });
                         this._processingState = ProcessingState_enum_1.ProcessingState.Failed;
                         this._error = (error instanceof Error) ? error.message : `${error}`;
+                        // save error state of step
+                        yield this.stepStateProvider.setStepState(this.processName, step.stepName, ((isArrayStep) ? step.itemIdentifier : null), step.getStepResult());
                         if (throwError) {
                             throw error;
                         }

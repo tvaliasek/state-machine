@@ -14,6 +14,7 @@ export interface StepInterface<stateType> {
     onSkipped(): void;
     onError(errorMessage: string): void;
     setProcessReference(process: ProcessInterface): void;
+    getStepResult(): ProcessStepStateInterface;
 }
 export interface ArrayItemStepInterface<stateType> extends StepInterface<stateType> {
     get itemIdentifier(): string;
