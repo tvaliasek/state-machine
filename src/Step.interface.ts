@@ -4,7 +4,7 @@ import { ProcessStepStateInterface } from './ProcessStepState.interface'
 export interface StepInterface<stateType> {
     get stepName (): string
     get state(): stateType|null
-    get dependsOn (): string[]
+    get dependsOn (): Array<string|{ stepName: string, itemIdentifier: string|null }>
     get success (): boolean
     get skipped (): boolean
     get error (): null|string

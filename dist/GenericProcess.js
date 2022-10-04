@@ -80,7 +80,8 @@ class GenericProcess extends events_1.EventEmitter {
             if (singleStepNames.includes(step.stepName) && arrayStepNames.includes(step.stepName)) {
                 throw new Error(`Invalid argument steps, step ${step.stepName} is declared as both single and array item step.`);
             }
-            for (const dependencyName of step.dependsOn) {
+            for (const entry of step.dependsOn) {
+                const dependencyName = (typeof entry === 'string') ? entry : entry.stepName;
                 if (!singleStepNames.includes(dependencyName) && !arrayStepNames.includes(dependencyName)) {
                     throw new Error(`Invalid argument steps, step ${step.stepName} depends on unknown step ${dependencyName}.`);
                 }
@@ -118,9 +119,8 @@ class GenericProcess extends events_1.EventEmitter {
         return this.implementsStepInterface(input) && input.itemIdentifier !== undefined;
     }
     /**
-     *
-     * @param stepName
-     * @returns
+     * @param {string} stepName
+     * @returns {boolean}
      */
     isArrayItemStep(stepName) {
         const arraySteps = this.steps.filter(step => step.stepName === stepName && this.implementsArrayItemStepInterface(step));
@@ -129,17 +129,29 @@ class GenericProcess extends events_1.EventEmitter {
     resolveStepDependencies(dependsOn) {
         return __awaiter(this, void 0, void 0, function* () {
             const dependenciesStates = [];
-            for (const dependencyStepName of dependsOn) {
+            for (const entry of dependsOn) {
+                const dependencyStepName = (typeof entry === 'string') ? entry : entry.stepName;
+                const itemIdentifier = (typeof entry === 'string') ? undefined : entry.itemIdentifier;
                 let dependencyState = null;
-                if (yield this.isArrayItemStep(dependencyStepName)) {
-                    const items = this.steps.filter(item => item.stepName === dependencyStepName);
-                    dependencyState = yield Promise.all(items.map((item) => __awaiter(this, void 0, void 0, function* () {
-                        const state = yield this.stepStateProvider.getStepState(this.processName, item.stepName, item.itemIdentifier);
-                        if (!state || (!state.skipped && !state.success)) {
-                            throw new Error(`Missing succeeded dependency state of step ${dependencyStepName}${(state === null || state === void 0 ? void 0 : state.itemIdentifier) ? `, item identifier: ${state.itemIdentifier}` : ''}`);
+                if (this.isArrayItemStep(dependencyStepName)) {
+                    // retrieve dependency state for specific item in array item steps
+                    if (itemIdentifier !== undefined) {
+                        dependencyState = yield this.stepStateProvider.getStepState(this.processName, dependencyStepName, itemIdentifier);
+                        if (!dependencyState || (!dependencyState.skipped && !dependencyState.success)) {
+                            throw new Error(`Missing succeeded dependency state of step ${dependencyStepName} with itemIdentifier: ${itemIdentifier}`);
                         }
-                        return state;
-                    })));
+                    }
+                    else {
+                        // retrieve dependency state for all items in array item steps
+                        const items = this.steps.filter(item => item.stepName === dependencyStepName);
+                        dependencyState = yield Promise.all(items.map((item) => __awaiter(this, void 0, void 0, function* () {
+                            const state = yield this.stepStateProvider.getStepState(this.processName, item.stepName, item.itemIdentifier);
+                            if (!state || (!state.skipped && !state.success)) {
+                                throw new Error(`Missing succeeded dependency state of step ${dependencyStepName}${(state === null || state === void 0 ? void 0 : state.itemIdentifier) ? `, item identifier: ${state.itemIdentifier}` : ''}`);
+                            }
+                            return state;
+                        })));
+                    }
                 }
                 else {
                     dependencyState = yield this.stepStateProvider.getStepState(this.processName, dependencyStepName, null);
@@ -216,8 +228,12 @@ class GenericProcess extends events_1.EventEmitter {
         });
     }
     /**
-     * @description This method is used to run only specific step of process.
-     * @param throwError optional param which says whether to throw an exception
+     * This method is used to run only specific step of process.
+     * @param {string} stepName name of step
+     * @param {(string|number|null)} [itemIdentifier=null] identifier of specific item in case of array item step
+     * @param {boolean} [throwError=false] optional param which says whether to throw an exception
+     * @returns {(Promise<ProcessStepStateInterface|null>)}
+     * @memberof GenericProcess
      */
     runStep(stepName, itemIdentifier = null, throwError = false) {
         return __awaiter(this, void 0, void 0, function* () {

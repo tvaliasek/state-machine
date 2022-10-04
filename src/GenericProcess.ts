@@ -86,7 +86,8 @@ export abstract class GenericProcess<inputType = unknown> extends EventEmitter i
             if (singleStepNames.includes(step.stepName) && arrayStepNames.includes(step.stepName)) {
                 throw new Error(`Invalid argument steps, step ${step.stepName} is declared as both single and array item step.`)
             }
-            for (const dependencyName of step.dependsOn) {
+            for (const entry of step.dependsOn) {
+                const dependencyName = (typeof entry === 'string') ? entry : entry.stepName
                 if (!singleStepNames.includes(dependencyName) && !arrayStepNames.includes(dependencyName)) {
                     throw new Error(`Invalid argument steps, step ${step.stepName} depends on unknown step ${dependencyName}.`)
                 }
@@ -128,32 +129,42 @@ export abstract class GenericProcess<inputType = unknown> extends EventEmitter i
     }
 
     /**
-     *
-     * @param stepName
-     * @returns
+     * @param {string} stepName
+     * @returns {boolean}
      */
     protected isArrayItemStep (stepName: string): boolean {
         const arraySteps = this.steps.filter(step => step.stepName === stepName && this.implementsArrayItemStepInterface(step))
         return arraySteps.length > 0
     }
 
-    protected async resolveStepDependencies (dependsOn: string[]): Promise<Map<string, ProcessStepStateInterface|ProcessStepStateInterface[]>> {
+    protected async resolveStepDependencies (dependsOn: Array<string|{ stepName: string, itemIdentifier: string|null }>): Promise<Map<string, ProcessStepStateInterface|ProcessStepStateInterface[]>> {
         const dependenciesStates: Array<[string, ProcessStepStateInterface|ProcessStepStateInterface[]]> = []
-        for (const dependencyStepName of dependsOn) {
+        for (const entry of dependsOn) {
+            const dependencyStepName = (typeof entry === 'string') ? entry : entry.stepName
+            const itemIdentifier = (typeof entry === 'string') ? undefined : entry.itemIdentifier
             let dependencyState = null
-            if (await this.isArrayItemStep(dependencyStepName)) {
-                const items = this.steps.filter(item => item.stepName === dependencyStepName) as Array<ArrayItemStepInterface<unknown>>
-                dependencyState = await Promise.all(
-                    items.map(
-                        async (item) => {
-                            const state = await this.stepStateProvider.getStepState(this.processName, item.stepName, item.itemIdentifier)
-                            if (!state || (!state.skipped && !state.success)) {
-                                throw new Error(`Missing succeeded dependency state of step ${dependencyStepName}${(state?.itemIdentifier) ? `, item identifier: ${state.itemIdentifier}` : ''}`)
+            if (this.isArrayItemStep(dependencyStepName)) {
+                // retrieve dependency state for specific item in array item steps
+                if (itemIdentifier !== undefined) {
+                    dependencyState = await this.stepStateProvider.getStepState(this.processName, dependencyStepName, itemIdentifier)
+                    if (!dependencyState || (!dependencyState.skipped && !dependencyState.success)) {
+                        throw new Error(`Missing succeeded dependency state of step ${dependencyStepName} with itemIdentifier: ${itemIdentifier}`)
+                    }
+                } else {
+                    // retrieve dependency state for all items in array item steps
+                    const items = this.steps.filter(item => item.stepName === dependencyStepName) as Array<ArrayItemStepInterface<unknown>>
+                    dependencyState = await Promise.all(
+                        items.map(
+                            async (item) => {
+                                const state = await this.stepStateProvider.getStepState(this.processName, item.stepName, item.itemIdentifier)
+                                if (!state || (!state.skipped && !state.success)) {
+                                    throw new Error(`Missing succeeded dependency state of step ${dependencyStepName}${(state?.itemIdentifier) ? `, item identifier: ${state.itemIdentifier}` : ''}`)
+                                }
+                                return state
                             }
-                            return state
-                        }
+                        )
                     )
-                )
+                }
             } else {
                 dependencyState = await this.stepStateProvider.getStepState(this.processName, dependencyStepName, null)
                 if (!dependencyState || (!dependencyState.skipped && !dependencyState.success)) {

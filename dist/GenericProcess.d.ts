@@ -49,20 +49,26 @@ export declare abstract class GenericProcess<inputType = unknown> extends EventE
      */
     protected implementsArrayItemStepInterface(input: any): input is ArrayItemStepInterface<unknown>;
     /**
-     *
-     * @param stepName
-     * @returns
+     * @param {string} stepName
+     * @returns {boolean}
      */
     protected isArrayItemStep(stepName: string): boolean;
-    protected resolveStepDependencies(dependsOn: string[]): Promise<Map<string, ProcessStepStateInterface | ProcessStepStateInterface[]>>;
+    protected resolveStepDependencies(dependsOn: Array<string | {
+        stepName: string;
+        itemIdentifier: string | null;
+    }>): Promise<Map<string, ProcessStepStateInterface | ProcessStepStateInterface[]>>;
     /**
      * @description This method is used to run whole process of steps.
      * @param throwError optional param which says whether to throw an exception
      */
     run(throwError?: boolean): Promise<void>;
     /**
-     * @description This method is used to run only specific step of process.
-     * @param throwError optional param which says whether to throw an exception
+     * This method is used to run only specific step of process.
+     * @param {string} stepName name of step
+     * @param {(string|number|null)} [itemIdentifier=null] identifier of specific item in case of array item step
+     * @param {boolean} [throwError=false] optional param which says whether to throw an exception
+     * @returns {(Promise<ProcessStepStateInterface|null>)}
+     * @memberof GenericProcess
      */
     runStep(stepName: string, itemIdentifier?: string | number | null, throwError?: boolean): Promise<ProcessStepStateInterface | null>;
 }
