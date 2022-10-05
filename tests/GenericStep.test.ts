@@ -121,13 +121,13 @@ describe('GenericStep basic implementation', () => {
             false,
             null
         )
-        step.onSkipped()
+        step.onSkipped({ result: 'bar' })
         expect(step.getStepResult()).toEqual({
             success: false,
             error: false,
             errorMessage: null,
             skipped: true,
-            state: { result: 'foo' },
+            state: { result: 'bar' },
             itemIdentifier: null
         })
     })

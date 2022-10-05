@@ -92,10 +92,13 @@ export abstract class GenericStep<stateType> {
         this._state = state
     }
 
-    onSkipped (): void {
+    onSkipped (state: stateType|null|undefined = undefined): void {
         this._error = null
         this._skipped = true
         this._success = false
+        if (state !== undefined) {
+            this._state = state
+        }
     }
 
     setStateOfDependencies (states: Map<string, unknown>): void {

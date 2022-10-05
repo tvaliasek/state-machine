@@ -26,7 +26,7 @@ export declare abstract class GenericStep<stateType> {
     getStepResult(): ProcessStepStateInterface;
     onError(error: string): void;
     onSuccess(state?: stateType | null): void;
-    onSkipped(): void;
+    onSkipped(state?: stateType | null | undefined): void;
     setStateOfDependencies(states: Map<string, unknown>): void;
     setInitialState(stepState: ProcessStepStateInterface): void;
     shouldRun(): boolean;

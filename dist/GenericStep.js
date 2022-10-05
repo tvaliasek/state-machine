@@ -65,10 +65,13 @@ class GenericStep {
         this._success = true;
         this._state = state;
     }
-    onSkipped() {
+    onSkipped(state = undefined) {
         this._error = null;
         this._skipped = true;
         this._success = false;
+        if (state !== undefined) {
+            this._state = state;
+        }
     }
     setStateOfDependencies(states) {
         this._stateOfDependencies = states;
