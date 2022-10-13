@@ -38,7 +38,8 @@ describe('GenericArrayStep basic implementation', () => {
             [],
             true,
             false,
-            null
+            null,
+            false
         )
         expect(step.getStepResult()).toEqual({
             success: true,
@@ -46,7 +47,8 @@ describe('GenericArrayStep basic implementation', () => {
             errorMessage: null,
             skipped: false,
             state: { result: 'foo' },
-            itemIdentifier: 'someId'
+            itemIdentifier: 'someId',
+            disabled: false
         })
     })
 
@@ -59,14 +61,16 @@ describe('GenericArrayStep basic implementation', () => {
             [],
             false,
             false,
-            null
+            null,
+            false
         )
         step.setInitialState({
             state: { result: 'foo' },
             success: true,
             skipped: false,
             error: false,
-            itemIdentifier: 'someId'
+            itemIdentifier: 'someId',
+            disabled: false
         })
         expect(step.getStepResult()).toEqual(
             {
@@ -75,7 +79,8 @@ describe('GenericArrayStep basic implementation', () => {
                 errorMessage: null,
                 skipped: false,
                 state: { result: 'foo' },
-                itemIdentifier: 'someId'
+                itemIdentifier: 'someId',
+                disabled: false
             }
         )
 
@@ -83,7 +88,8 @@ describe('GenericArrayStep basic implementation', () => {
             state: { result: 'foo' },
             success: true,
             skipped: false,
-            error: false
+            error: false,
+            disabled: false
         })).toThrow('Bad arguments: missing required identifier')
     })
 

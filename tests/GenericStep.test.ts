@@ -34,7 +34,8 @@ describe('GenericStep basic implementation', () => {
             errorMessage: null,
             skipped: false,
             state: { result: 'foo' },
-            itemIdentifier: null
+            itemIdentifier: null,
+            disabled: false
         })
 
         step = new NormalStep(
@@ -51,7 +52,8 @@ describe('GenericStep basic implementation', () => {
             errorMessage: 'error message',
             skipped: false,
             state: { result: 'foo' },
-            itemIdentifier: null
+            itemIdentifier: null,
+            disabled: false
         })
 
         step = new NormalStep(
@@ -68,7 +70,8 @@ describe('GenericStep basic implementation', () => {
             errorMessage: null,
             skipped: true,
             state: { result: 'foo' },
-            itemIdentifier: null
+            itemIdentifier: null,
+            disabled: false
         })
     })
 
@@ -88,7 +91,8 @@ describe('GenericStep basic implementation', () => {
             errorMessage: 'error message',
             skipped: false,
             state: { result: 'foo' },
-            itemIdentifier: null
+            itemIdentifier: null,
+            disabled: false
         })
     })
 
@@ -108,7 +112,8 @@ describe('GenericStep basic implementation', () => {
             errorMessage: null,
             skipped: false,
             state: { result: 'bar' },
-            itemIdentifier: null
+            itemIdentifier: null,
+            disabled: false
         })
     })
 
@@ -128,7 +133,8 @@ describe('GenericStep basic implementation', () => {
             errorMessage: null,
             skipped: true,
             state: { result: 'bar' },
-            itemIdentifier: null
+            itemIdentifier: null,
+            disabled: false
         })
     })
 
@@ -160,7 +166,8 @@ describe('GenericStep basic implementation', () => {
             state: { result: 'foo' },
             success: true,
             skipped: false,
-            error: false 
+            error: false,
+            disabled: false
         })
         expect(step.getStepResult()).toEqual(
             {
@@ -169,7 +176,8 @@ describe('GenericStep basic implementation', () => {
                 errorMessage: null,
                 skipped: false,
                 state: { result: 'foo' },
-                itemIdentifier: null
+                itemIdentifier: null,
+                disabled: false
             }
         )
     })
@@ -187,28 +195,32 @@ describe('GenericStep basic implementation', () => {
             state: { result: 'foo' },
             success: false,
             skipped: false,
-            error: false 
+            error: false,
+            disabled: false
         })
         expect(step.shouldRun()).toBe(true)
         step.setInitialState({
             state: { result: 'foo' },
             success: true,
             skipped: false,
-            error: false 
+            error: false,
+            disabled: false
         })
         expect(step.shouldRun()).toBe(false)
         step.setInitialState({
             state: { result: 'foo' },
             success: false,
             skipped: true,
-            error: false 
+            error: false,
+            disabled: false
         })
         expect(step.shouldRun()).toBe(false)
         step.setInitialState({
             state: { result: 'foo' },
             success: true,
             skipped: true,
-            error: false 
+            error: false,
+            disabled: false
         })
         step.onError('some error')
         expect(step.shouldRun()).toBe(true)

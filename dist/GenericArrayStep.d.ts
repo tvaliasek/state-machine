@@ -6,7 +6,7 @@ import { ProcessStepStateInterface } from './ProcessStepState.interface';
  */
 export declare class GenericArrayStep<stateType> extends GenericStep<stateType> {
     protected _itemIdentifier: string;
-    constructor(stepName: string, itemIdentifier: string, state?: stateType | null, dependsOn?: string[], success?: boolean, skipped?: boolean, error?: null | string);
+    constructor(stepName: string, itemIdentifier: string, state?: stateType | null, dependsOn?: string[], success?: boolean, skipped?: boolean, error?: null | string, disabled?: boolean);
     get itemIdentifier(): string;
     getStepResult(): ProcessStepStateInterface;
     setInitialState(stepState: ProcessStepStateInterface): void;

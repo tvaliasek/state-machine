@@ -6,7 +6,7 @@ exports.GenericStep = void 0;
  * @template stateType
  */
 class GenericStep {
-    constructor(stepName, state = null, dependsOn = [], success = false, skipped = false, error = null) {
+    constructor(stepName, state = null, dependsOn = [], success = false, skipped = false, error = null, disabled = false) {
         this._process = null;
         this._stepName = stepName;
         this._state = state;
@@ -14,6 +14,7 @@ class GenericStep {
         this._success = success;
         this._skipped = skipped;
         this._error = error;
+        this._disabled = disabled;
         this._stateOfDependencies = new Map();
     }
     get stepName() {
@@ -27,6 +28,9 @@ class GenericStep {
     }
     get success() {
         return this._success;
+    }
+    get disabled() {
+        return this._disabled;
     }
     get skipped() {
         return this._skipped;
@@ -51,24 +55,28 @@ class GenericStep {
             errorMessage: (_a = this.error) !== null && _a !== void 0 ? _a : null,
             skipped: this.skipped,
             state: (this.state) ? Object.assign({}, this.state) : null,
-            itemIdentifier: null
+            itemIdentifier: null,
+            disabled: this.disabled
         };
     }
     onError(error) {
         this._error = error;
         this._skipped = false;
         this._success = false;
+        this._disabled = false;
     }
     onSuccess(state = null) {
         this._error = null;
         this._skipped = false;
         this._success = true;
+        this._disabled = false;
         this._state = state;
     }
     onSkipped(state = undefined) {
         this._error = null;
         this._skipped = true;
         this._success = false;
+        this._disabled = false;
         if (state !== undefined) {
             this._state = state;
         }
@@ -80,9 +88,10 @@ class GenericStep {
         this._state = stepState.state;
         this._success = stepState.success;
         this._skipped = stepState.skipped;
+        this._disabled = stepState.disabled;
     }
     shouldRun() {
-        return !(this.success || this.skipped);
+        return !(this.success || this.skipped || this.disabled);
     }
 }
 exports.GenericStep = GenericStep;

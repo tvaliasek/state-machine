@@ -153,7 +153,8 @@ describe('GenericProcess basic implementation', () => {
                         skipped: false,
                         error: false,
                         errorMessage: null,
-                        itemIdentifier: null
+                        itemIdentifier: null,
+                        disabled: false
                     } 
                 } 
             },
@@ -169,7 +170,8 @@ describe('GenericProcess basic implementation', () => {
                         skipped: true,
                         error: false,
                         errorMessage: null,
-                        itemIdentifier: null
+                        itemIdentifier: null,
+                        disabled: false
                     } 
                 } 
             },
@@ -185,7 +187,8 @@ describe('GenericProcess basic implementation', () => {
                         skipped: false,
                         error: false,
                         errorMessage: null,
-                        itemIdentifier: '1'
+                        itemIdentifier: '1',
+                        disabled: false
                     } 
                 } 
             },
@@ -201,7 +204,8 @@ describe('GenericProcess basic implementation', () => {
                         skipped: false,
                         error: false,
                         errorMessage: null,
-                        itemIdentifier: '2'
+                        itemIdentifier: '2',
+                        disabled: false
                     } 
                 } 
             },

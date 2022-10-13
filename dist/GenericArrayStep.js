@@ -7,8 +7,8 @@ const GenericStep_1 = require("./GenericStep");
  * @extends GenericStep
  */
 class GenericArrayStep extends GenericStep_1.GenericStep {
-    constructor(stepName, itemIdentifier, state = null, dependsOn = [], success = false, skipped = false, error = null) {
-        super(stepName, state, dependsOn, success, skipped, error);
+    constructor(stepName, itemIdentifier, state = null, dependsOn = [], success = false, skipped = false, error = null, disabled = false) {
+        super(stepName, state, dependsOn, success, skipped, error, disabled);
         if (!itemIdentifier) {
             throw new Error('Bad arguments: missing required identifier');
         }
@@ -24,7 +24,8 @@ class GenericArrayStep extends GenericStep_1.GenericStep {
             errorMessage: this.error,
             skipped: this.skipped,
             state: (this.state) ? Object.assign({}, this.state) : null,
-            itemIdentifier: this.itemIdentifier
+            itemIdentifier: this.itemIdentifier,
+            disabled: this.disabled
         };
     }
     setInitialState(stepState) {

@@ -15,7 +15,8 @@ export class GenericArrayStep<stateType> extends GenericStep<stateType> {
         dependsOn: string[] = [],
         success = false,
         skipped = false,
-        error: null|string = null
+        error: null|string = null,
+        disabled = false
     ) {
         super(
             stepName,
@@ -23,7 +24,8 @@ export class GenericArrayStep<stateType> extends GenericStep<stateType> {
             dependsOn,
             success,
             skipped,
-            error
+            error,
+            disabled
         )
         if (!itemIdentifier) {
             throw new Error('Bad arguments: missing required identifier')
@@ -42,7 +44,8 @@ export class GenericArrayStep<stateType> extends GenericStep<stateType> {
             errorMessage: this.error,
             skipped: this.skipped,
             state: (this.state) ? { ...this.state } : null,
-            itemIdentifier: this.itemIdentifier
+            itemIdentifier: this.itemIdentifier,
+            disabled: this.disabled
         }
     }
 

@@ -10,14 +10,16 @@ export declare abstract class GenericStep<stateType> {
     protected _dependsOn: string[];
     protected _success: boolean;
     protected _skipped: boolean;
+    protected _disabled: boolean;
     protected _error: null | string;
     protected _stateOfDependencies: Map<string, unknown>;
     protected _process: ProcessInterface | null;
-    constructor(stepName: string, state?: stateType | null, dependsOn?: string[], success?: boolean, skipped?: boolean, error?: null | string);
+    constructor(stepName: string, state?: stateType | null, dependsOn?: string[], success?: boolean, skipped?: boolean, error?: null | string, disabled?: boolean);
     get stepName(): string;
     get state(): stateType | null;
     get dependsOn(): string[];
     get success(): boolean;
+    get disabled(): boolean;
     get skipped(): boolean;
     get error(): null | string;
     get stateOfDependencies(): Map<string, unknown>;

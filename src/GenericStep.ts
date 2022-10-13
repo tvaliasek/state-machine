@@ -11,6 +11,7 @@ export abstract class GenericStep<stateType> {
     protected _dependsOn: string[]
     protected _success: boolean
     protected _skipped: boolean
+    protected _disabled: boolean
     protected _error: null|string
     protected _stateOfDependencies: Map<string, unknown>
     protected _process: ProcessInterface|null = null
@@ -21,7 +22,8 @@ export abstract class GenericStep<stateType> {
         dependsOn: string[] = [],
         success = false,
         skipped = false,
-        error: null|string = null
+        error: null|string = null,
+        disabled = false
     ) {
         this._stepName = stepName
         this._state = state
@@ -29,6 +31,7 @@ export abstract class GenericStep<stateType> {
         this._success = success
         this._skipped = skipped
         this._error = error
+        this._disabled = disabled
         this._stateOfDependencies = new Map()
     }
 
@@ -46,6 +49,10 @@ export abstract class GenericStep<stateType> {
 
     get success (): boolean {
         return this._success
+    }
+
+    get disabled (): boolean {
+        return this._disabled
     }
 
     get skipped (): boolean {
@@ -75,7 +82,8 @@ export abstract class GenericStep<stateType> {
             errorMessage: this.error ?? null,
             skipped: this.skipped,
             state: (this.state) ? { ...this.state } : null,
-            itemIdentifier: null
+            itemIdentifier: null,
+            disabled: this.disabled
         }
     }
 
@@ -83,12 +91,14 @@ export abstract class GenericStep<stateType> {
         this._error = error
         this._skipped = false
         this._success = false
+        this._disabled = false
     }
 
     onSuccess (state: stateType|null = null): void {
         this._error = null
         this._skipped = false
         this._success = true
+        this._disabled = false
         this._state = state
     }
 
@@ -96,6 +106,7 @@ export abstract class GenericStep<stateType> {
         this._error = null
         this._skipped = true
         this._success = false
+        this._disabled = false
         if (state !== undefined) {
             this._state = state
         }
@@ -109,9 +120,10 @@ export abstract class GenericStep<stateType> {
         this._state = stepState.state as stateType
         this._success = stepState.success
         this._skipped = stepState.skipped
+        this._disabled = stepState.disabled
     }
 
     shouldRun (): boolean {
-        return !(this.success || this.skipped)
+        return !(this.success || this.skipped || this.disabled)
     }
 }
