@@ -235,7 +235,7 @@ class GenericProcess extends events_1.EventEmitter {
      * @returns {(Promise<ProcessStepStateInterface|null>)}
      * @memberof GenericProcess
      */
-    runStep(stepName, itemIdentifier = null, throwError = false) {
+    runStep(stepName, itemIdentifier = null, throwError = false, additionalArguments = null) {
         return __awaiter(this, void 0, void 0, function* () {
             for (const step of this._steps) {
                 // check common interface
@@ -259,7 +259,7 @@ class GenericProcess extends events_1.EventEmitter {
                                 step.setStateOfDependencies(dependenciesStates);
                             }
                             // perform unit of work
-                            const state = yield step.doWork();
+                            const state = yield step.doWork(additionalArguments !== null && additionalArguments !== void 0 ? additionalArguments : undefined);
                             // save unit of work result
                             yield this.stepStateProvider.setStepState(this.processName, step.stepName, ((isArrayStep) ? step.itemIdentifier : null), state);
                             return step.getStepResult();

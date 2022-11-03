@@ -9,7 +9,7 @@ export interface StepInterface<stateType> {
     get skipped (): boolean
     get error (): null|string
 
-    doWork(): Promise<ProcessStepStateInterface>
+    doWork(additionalArguments?: Record<string, any>): Promise<ProcessStepStateInterface>
     setStateOfDependencies(states: Map<string, ProcessStepStateInterface|ProcessStepStateInterface[]>): void
     setInitialState (stepState: ProcessStepStateInterface): void
     onSuccess(state: stateType|null): void

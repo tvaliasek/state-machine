@@ -259,7 +259,7 @@ export abstract class GenericProcess<inputType = unknown> extends EventEmitter i
      * @returns {(Promise<ProcessStepStateInterface|null>)}
      * @memberof GenericProcess
      */
-    async runStep (stepName: string, itemIdentifier: string|number|null = null, throwError = false): Promise<ProcessStepStateInterface|null> {
+    async runStep (stepName: string, itemIdentifier: string|number|null = null, throwError = false, additionalArguments: null|Record<string, any> = null): Promise<ProcessStepStateInterface|null> {
         for (const step of this._steps) {
             // check common interface
             if (this.implementsStepInterface(step)) {
@@ -288,7 +288,7 @@ export abstract class GenericProcess<inputType = unknown> extends EventEmitter i
                             step.setStateOfDependencies(dependenciesStates)
                         }
                         // perform unit of work
-                        const state = await step.doWork()
+                        const state = await step.doWork(additionalArguments ?? undefined)
                         // save unit of work result
                         await this.stepStateProvider.setStepState(
                             this.processName,

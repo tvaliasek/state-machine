@@ -70,6 +70,6 @@ export declare abstract class GenericProcess<inputType = unknown> extends EventE
      * @returns {(Promise<ProcessStepStateInterface|null>)}
      * @memberof GenericProcess
      */
-    runStep(stepName: string, itemIdentifier?: string | number | null, throwError?: boolean): Promise<ProcessStepStateInterface | null>;
+    runStep(stepName: string, itemIdentifier?: string | number | null, throwError?: boolean, additionalArguments?: null | Record<string, any>): Promise<ProcessStepStateInterface | null>;
 }
 //# sourceMappingURL=GenericProcess.d.ts.map
