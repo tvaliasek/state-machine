@@ -8,7 +8,7 @@ import { ProcessStepStateInterface } from './ProcessStepState.interface'
 export abstract class GenericStep<stateType> {
     protected _stepName: string
     protected _state: stateType|null
-    protected _dependsOn: string[]
+    protected _dependsOn: Array<string | { stepName: string, itemIdentifier: string|null }>
     protected _success: boolean
     protected _skipped: boolean
     protected _disabled: boolean
@@ -19,7 +19,7 @@ export abstract class GenericStep<stateType> {
     constructor (
         stepName: string,
         state: stateType|null = null,
-        dependsOn: string[] = [],
+        dependsOn: Array<string | { stepName: string, itemIdentifier: string|null }> = [],
         success = false,
         skipped = false,
         error: null|string = null,
@@ -43,7 +43,7 @@ export abstract class GenericStep<stateType> {
         return this._state
     }
 
-    get dependsOn (): string[] {
+    get dependsOn (): Array<string | { stepName: string, itemIdentifier: string | null }> {
         return this._dependsOn
     }
 
