@@ -13,7 +13,7 @@ export interface StepInterface<stateType> {
     setStateOfDependencies(states: Map<string, ProcessStepStateInterface|ProcessStepStateInterface[]>): void
     setInitialState (stepState: ProcessStepStateInterface): void
     onSuccess(state: stateType|null): void
-    onSkipped(): void
+    onSkipped(state: stateType|null|undefined): void
     onError(errorMessage: string): void
     setProcessReference(process: ProcessInterface): void
     getStepResult (): ProcessStepStateInterface
