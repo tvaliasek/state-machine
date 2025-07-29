@@ -192,6 +192,11 @@ class GenericProcess extends events_1.EventEmitter {
                             const dependenciesStates = yield this.resolveStepDependencies(step.dependsOn);
                             step.setStateOfDependencies(dependenciesStates);
                         }
+                        this.emit('step-start', {
+                            processName: this.processName,
+                            stepName: step.stepName,
+                            itemIdentifier: ((isArrayStep) ? step.itemIdentifier : null)
+                        });
                         // perform unit of work
                         const state = yield step.doWork();
                         // save unit of work result
