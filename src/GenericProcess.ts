@@ -207,6 +207,11 @@ export abstract class GenericProcess<inputType = unknown> extends EventEmitter i
                         const dependenciesStates = await this.resolveStepDependencies(step.dependsOn)
                         step.setStateOfDependencies(dependenciesStates)
                     }
+                    this.emit('step-start', {
+                        processName: this.processName,
+                        stepName: step.stepName,
+                        itemIdentifier: ((isArrayStep) ? step.itemIdentifier : null)
+                    })
                     // perform unit of work
                     const state = await step.doWork()
                     // save unit of work result

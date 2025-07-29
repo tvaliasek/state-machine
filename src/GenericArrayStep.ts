@@ -12,7 +12,7 @@ export class GenericArrayStep<stateType> extends GenericStep<stateType> {
         stepName: string,
         itemIdentifier: string,
         state: stateType|null = null,
-        dependsOn: string[] = [],
+        dependsOn: Array<string | { stepName: string, itemIdentifier: string|null }> = [],
         success = false,
         skipped = false,
         error: null|string = null,
