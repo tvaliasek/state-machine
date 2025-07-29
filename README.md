@@ -62,7 +62,7 @@ The generic class is an event emitter, so you can listen for events:
 | event | data | description | 
 |-------|------|-------------|
 | `start` | `{ processName: string }` | emitted on start of run |
-| `step-start` | `{ processName: string, stepName: string, itemIdentifier: string\|null }` | emitted after successful doWork method call |
+| `step-start` | `{ processName: string, stepName: string, itemIdentifier: string\|null }` | emitted before doWork method is called |
 | `step-done` | `{ processName: string, stepName: string, itemIdentifier: string\|null, state: ProcessStepStateInterface }` | emitted after successful doWork method call |
 | `step-error` | `{ processName: string, stepName: string, itemIdentifier: string\|null, error: Error }` | emitted when any error is thrown from doWork method |
 | `done` | `{ processName: string }` | emitted on end of run |
