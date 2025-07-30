@@ -36,7 +36,7 @@ export abstract class GenericProcess<inputType = unknown> extends EventEmitter i
         public readonly processName: string,
         steps: Array<StepInterface<unknown>|ArrayItemStepInterface<unknown>>,
         protected readonly stepStateProvider: ProcessStateProviderInterface,
-        protected readonly processedInput: inputType|null = null
+        protected processedInput: inputType|null = null
     ) {
         super()
         this._steps = steps
