@@ -228,12 +228,6 @@ export abstract class GenericProcess<inputType = unknown> extends EventEmitter i
                         state
                     })
                 } catch (error) {
-                    this.emit('step-error', {
-                        processName: this.processName,
-                        stepName: step.stepName,
-                        itemIdentifier: ((isArrayStep) ? step.itemIdentifier : null),
-                        error
-                    })
                     this._processingState = ProcessingState.Failed
                     this._error = (error instanceof Error) ? error.message : `${error}`
                     // save error state of step
@@ -243,6 +237,12 @@ export abstract class GenericProcess<inputType = unknown> extends EventEmitter i
                         ((isArrayStep) ? step.itemIdentifier : null),
                         step.getStepResult()
                     )
+                    this.emit('step-error', {
+                        processName: this.processName,
+                        stepName: step.stepName,
+                        itemIdentifier: ((isArrayStep) ? step.itemIdentifier : null),
+                        error
+                    })
                     if (throwError) {
                         throw error
                     }
