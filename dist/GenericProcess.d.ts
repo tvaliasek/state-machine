@@ -29,7 +29,7 @@ import { ProcessInterface } from './Process.interface';
 export declare abstract class GenericProcess<inputType = unknown> extends EventEmitter implements ProcessInterface {
     readonly processName: string;
     protected readonly stepStateProvider: ProcessStateProviderInterface;
-    protected readonly processedInput: inputType | null;
+    protected processedInput: inputType | null;
     protected _processingState: ProcessingState;
     protected _stepStates: ProcessStepStateInterface[];
     protected _error: string | null;

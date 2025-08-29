@@ -209,16 +209,16 @@ class GenericProcess extends events_1.EventEmitter {
                         });
                     }
                     catch (error) {
+                        this._processingState = ProcessingState_enum_1.ProcessingState.Failed;
+                        this._error = (error instanceof Error) ? error.message : `${error}`;
+                        // save error state of step
+                        yield this.stepStateProvider.setStepState(this.processName, step.stepName, ((isArrayStep) ? step.itemIdentifier : null), step.getStepResult());
                         this.emit('step-error', {
                             processName: this.processName,
                             stepName: step.stepName,
                             itemIdentifier: ((isArrayStep) ? step.itemIdentifier : null),
                             error
                         });
-                        this._processingState = ProcessingState_enum_1.ProcessingState.Failed;
-                        this._error = (error instanceof Error) ? error.message : `${error}`;
-                        // save error state of step
-                        yield this.stepStateProvider.setStepState(this.processName, step.stepName, ((isArrayStep) ? step.itemIdentifier : null), step.getStepResult());
                         if (throwError) {
                             throw error;
                         }
