@@ -31,7 +31,7 @@ export abstract class AbstractProcessStepState {
         default: null
     })
     @Expose()
-    itemIdentifier: string|null
+    itemIdentifier: string | null
 
     @Prop({
         type: SchemaTypes.Boolean,
@@ -59,7 +59,7 @@ export abstract class AbstractProcessStepState {
         default: null
     })
     @Expose()
-    errorMessage: string|null
+    errorMessage: string | null
 
     @Prop({
         type: SchemaTypes.String,

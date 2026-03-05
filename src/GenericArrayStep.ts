@@ -8,14 +8,14 @@ import { ProcessStepStateInterface } from './ProcessStepState.interface'
 export class GenericArrayStep<stateType> extends GenericStep<stateType> {
     protected _itemIdentifier: string
 
-    constructor (
+    constructor(
         stepName: string,
         itemIdentifier: string,
-        state: stateType|null = null,
-        dependsOn: Array<string | { stepName: string, itemIdentifier: string|null }> = [],
+        state: stateType | null = null,
+        dependsOn: Array<string | { stepName: string, itemIdentifier: string | null }> = [],
         success = false,
         skipped = false,
-        error: null|string = null,
+        error: null | string = null,
         disabled = false
     ) {
         super(
@@ -33,11 +33,11 @@ export class GenericArrayStep<stateType> extends GenericStep<stateType> {
         this._itemIdentifier = `${itemIdentifier}`
     }
 
-    get itemIdentifier (): string {
+    get itemIdentifier(): string {
         return this._itemIdentifier
     }
 
-    getStepResult (): ProcessStepStateInterface {
+    getStepResult(): ProcessStepStateInterface {
         return {
             success: this.success,
             error: this.error !== null,
@@ -49,7 +49,7 @@ export class GenericArrayStep<stateType> extends GenericStep<stateType> {
         }
     }
 
-    setInitialState (stepState: ProcessStepStateInterface): void {
+    setInitialState(stepState: ProcessStepStateInterface): void {
         super.setInitialState(stepState)
         if (!stepState.itemIdentifier) {
             throw new Error('Bad arguments: missing required identifier')

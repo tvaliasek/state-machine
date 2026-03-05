@@ -2,8 +2,8 @@ import { GenericArrayStep, ArrayItemStepInterface, ProcessStepStateInterface, Ge
 
 export class ArrayItemStep extends GenericArrayStep<Record<string, any>> implements ArrayItemStepInterface<Record<string, any>> {
     public shouldFail = false
-    
-    doWork (): Promise<ProcessStepStateInterface> {
+
+    doWork(): Promise<ProcessStepStateInterface> {
         if (!this.shouldRun()) {
             return Promise.resolve(this.getStepResult())
         }
@@ -11,7 +11,7 @@ export class ArrayItemStep extends GenericArrayStep<Record<string, any>> impleme
             this.onError('I was born to fail.')
             return Promise.reject(new Error('I was born to fail.'))
         }
-        return new Promise((resolve, reject) => {
+        return new Promise<ProcessStepStateInterface>((resolve) => {
             setTimeout(
                 () => {
                     this.onSuccess(this.state)
@@ -19,14 +19,14 @@ export class ArrayItemStep extends GenericArrayStep<Record<string, any>> impleme
                 },
                 250
             )
-        })    
+        })
     }
 }
 
 export class Step extends GenericStep<Record<string, any>> implements StepInterface<Record<string, any>> {
     public shouldFail = false
-    
-    doWork (): Promise<ProcessStepStateInterface> {
+
+    doWork(): Promise<ProcessStepStateInterface> {
         if (!this.shouldRun()) {
             return Promise.resolve(this.getStepResult())
         }
@@ -34,7 +34,7 @@ export class Step extends GenericStep<Record<string, any>> implements StepInterf
             this.onError('I was born to fail.')
             return Promise.reject(new Error('I was born to fail.'))
         }
-        return new Promise((resolve, reject) => {
+        return new Promise<ProcessStepStateInterface>((resolve) => {
             setTimeout(
                 () => {
                     this.onSuccess(this.state)
@@ -42,18 +42,23 @@ export class Step extends GenericStep<Record<string, any>> implements StepInterf
                 },
                 250
             )
-        })    
+        })
     }
 }
 
 export class LongStep extends Step {
-    doWork (): Promise<ProcessStepStateInterface> {
+    doWork(): Promise<ProcessStepStateInterface> {
         if (this.shouldFail) {
             this.onError('error message')
             throw new Error('error message')
         }
-        return new Promise((resolve) => { setTimeout(() => { this.onSuccess(); resolve(this.getStepResult()) }, (this.shouldFail) ? 0 : 1000) })
-    }    
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                this.onSuccess()
+                resolve(this.getStepResult())
+            }, this.shouldFail ? 0 : 1000)
+        })
+    }
 }
 
 export class Process extends GenericProcess<Record<string, any>> {
@@ -63,25 +68,25 @@ export class Process extends GenericProcess<Record<string, any>> {
 }
 
 export type InternalState = Array<{
-    processName: string,
-    stepName: string,
-    itemIdentifier: string|null
+    processName: string
+    stepName: string
+    itemIdentifier: string | null
     state: ProcessStepStateInterface
 }>
 
 export class StepStateProvider {
-    constructor (
-        public state: InternalState  = []
+    constructor(
+        public state: InternalState = []
     ) {}
 
-    async getStepState (processName: string, stepName: string, itemIdentifier: string|null): Promise<ProcessStepStateInterface|null> {
+    getStepState(processName: string, stepName: string, itemIdentifier: string | null): Promise<ProcessStepStateInterface | null> {
         const entry = this.state.find(item => item.processName === processName && item.stepName === stepName && item.itemIdentifier === itemIdentifier)
-        return entry ? entry.state : null
+        return Promise.resolve(entry ? entry.state : null)
     }
 
-    async setStepState (processName: string, stepName: string, itemIdentifier: string|null, stepState: ProcessStepStateInterface): Promise<void> {
+    async setStepState(processName: string, stepName: string, itemIdentifier: string | null, stepState: ProcessStepStateInterface): Promise<void> {
         if (await this.getStepState(processName, stepName, itemIdentifier) !== null) {
-            this.state = this.state.map(item => {
+            this.state = this.state.map((item) => {
                 if (item.processName === processName && item.stepName === stepName && item.itemIdentifier === itemIdentifier) {
                     return {
                         ...item,
@@ -101,7 +106,7 @@ export class StepStateProvider {
     }
 }
 
-export const processFactory = (state: InternalState, steps: Array<Step|ArrayItemStep>, input: Record<string, any> = { processedInputId: 'someId' }): Process => {
+export const processFactory = (state: InternalState, steps: Array<Step | ArrayItemStep>, input: Record<string, any> = { processedInputId: 'someId' }): Process => {
     return new Process('process', steps, new StepStateProvider(state), input)
 }
 
@@ -118,7 +123,7 @@ export const defaultState = [
             errorMessage: null,
             itemIdentifier: null,
             disabled: false
-        } 
+        }
     },
     {
         processName: 'process',

@@ -1,13 +1,13 @@
-import { GenericArrayStep, ArrayItemStepInterface, ProcessStepStateInterface } from "../../src"
+import { GenericArrayStep, ArrayItemStepInterface, ProcessStepStateInterface } from '../../src'
 
 export class ExampleArrayItemStep extends GenericArrayStep<Record<string, any>> implements ArrayItemStepInterface<Record<string, any>> {
-    async doWork (): Promise<ProcessStepStateInterface> {
+    async doWork(): Promise<ProcessStepStateInterface> {
         try {
             if (!this.shouldRun()) {
                 return this.getStepResult()
             }
-            
-            return await (new Promise((resolve, reject) => {
+
+            return await (new Promise<ProcessStepStateInterface>((resolve) => {
                 setTimeout(
                     () => {
                         this.onSuccess(this.state)
@@ -18,7 +18,7 @@ export class ExampleArrayItemStep extends GenericArrayStep<Record<string, any>> 
                 )
             }))
         } catch (error) {
-            this.onError(error.message)
+            this.onError((error as Error).message)
             throw error
         }
     }

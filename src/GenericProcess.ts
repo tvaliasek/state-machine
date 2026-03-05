@@ -29,14 +29,14 @@ import { ProcessInterface } from './Process.interface'
 export abstract class GenericProcess<inputType = unknown> extends EventEmitter implements ProcessInterface {
     protected _processingState: ProcessingState = ProcessingState.Idle
     protected _stepStates: ProcessStepStateInterface[] = []
-    protected _error: string|null = null
-    protected _steps: Array<StepInterface<unknown>|ArrayItemStepInterface<unknown>>
+    protected _error: string | null = null
+    protected _steps: Array<StepInterface<unknown> | ArrayItemStepInterface<unknown>>
 
-    constructor (
+    constructor(
         public readonly processName: string,
-        steps: Array<StepInterface<unknown>|ArrayItemStepInterface<unknown>>,
+        steps: Array<StepInterface<unknown> | ArrayItemStepInterface<unknown>>,
         protected readonly stepStateProvider: ProcessStateProviderInterface,
-        protected processedInput: inputType|null = null
+        protected processedInput: inputType | null = null
     ) {
         super()
         this._steps = steps
@@ -44,15 +44,15 @@ export abstract class GenericProcess<inputType = unknown> extends EventEmitter i
         this.checkStepsValidity()
     }
 
-    get steps (): Array<StepInterface<unknown>|ArrayItemStepInterface<unknown>> {
+    get steps(): Array<StepInterface<unknown> | ArrayItemStepInterface<unknown>> {
         return this._steps
     }
 
-    getProcessInput<processedInputType = inputType|null> (): processedInputType|null {
-        return this.processedInput as processedInputType|null
+    getProcessInput<processedInputType = inputType | null>(): processedInputType | null {
+        return this.processedInput as processedInputType | null
     }
 
-    public setSteps (steps: Array<StepInterface<unknown>|ArrayItemStepInterface<unknown>>): void {
+    public setSteps(steps: Array<StepInterface<unknown> | ArrayItemStepInterface<unknown>>): void {
         if (this._processingState === ProcessingState.Running) {
             throw new Error('Cannot change steps during run phase.')
         }
@@ -60,13 +60,13 @@ export abstract class GenericProcess<inputType = unknown> extends EventEmitter i
         this.checkStepsValidity()
     }
 
-    public async getStepState (stepName: string): Promise<ProcessStepStateInterface|ProcessStepStateInterface[]|null> {
+    public async getStepState(stepName: string): Promise<ProcessStepStateInterface | ProcessStepStateInterface[] | null> {
         const isArrayStep = this.isArrayItemStep(stepName)
         const states = (await Promise.all(
             this._steps
                 .filter(item => item.stepName === stepName)
                 .map(
-                    async (item) => await this.stepStateProvider.getStepState(
+                    async item => await this.stepStateProvider.getStepState(
                         this.processName,
                         item.stepName,
                         (this.implementsArrayItemStepInterface(item) ? item.itemIdentifier : null)
@@ -79,7 +79,7 @@ export abstract class GenericProcess<inputType = unknown> extends EventEmitter i
         return (isArrayStep) ? states as ProcessStepStateInterface[] : states[0] as ProcessStepStateInterface
     }
 
-    protected checkStepsValidity (): void {
+    protected checkStepsValidity(): void {
         const singleStepNames = [...new Set(this.steps.filter(item => !this.implementsArrayItemStepInterface(item)).map(item => item.stepName))]
         const arrayStepNames = [...new Set(this.steps.filter(item => this.implementsArrayItemStepInterface(item)).map(item => item.stepName))]
         for (const step of this.steps) {
@@ -108,15 +108,15 @@ export abstract class GenericProcess<inputType = unknown> extends EventEmitter i
         }
     }
 
-    get error (): string|null {
+    get error(): string | null {
         return this._error ?? null
     }
 
-    get processingState (): ProcessingState {
+    get processingState(): ProcessingState {
         return this._processingState
     }
 
-    protected implementsStepInterface (input: any): input is StepInterface<unknown> {
+    protected implementsStepInterface(input: any): input is StepInterface<unknown> {
         return (input as StepInterface<unknown>).stepName !== undefined
     }
 
@@ -124,7 +124,7 @@ export abstract class GenericProcess<inputType = unknown> extends EventEmitter i
      * @description Method that decides whether input implements StepInterface
      * @param input usually step
      */
-    protected implementsArrayItemStepInterface (input: any): input is ArrayItemStepInterface<unknown> {
+    protected implementsArrayItemStepInterface(input: any): input is ArrayItemStepInterface<unknown> {
         return this.implementsStepInterface(input) && (input as ArrayItemStepInterface<unknown>).itemIdentifier !== undefined
     }
 
@@ -132,17 +132,17 @@ export abstract class GenericProcess<inputType = unknown> extends EventEmitter i
      * @param {string} stepName
      * @returns {boolean}
      */
-    protected isArrayItemStep (stepName: string): boolean {
+    protected isArrayItemStep(stepName: string): boolean {
         const arraySteps = this.steps.filter(step => step.stepName === stepName && this.implementsArrayItemStepInterface(step))
         return arraySteps.length > 0
     }
 
-    protected async resolveStepDependencies (dependsOn: Array<string|{ stepName: string, itemIdentifier: string|null }>): Promise<Map<string, ProcessStepStateInterface|ProcessStepStateInterface[]>> {
-        const dependenciesStates: Array<[string, ProcessStepStateInterface|ProcessStepStateInterface[]]> = []
+    protected async resolveStepDependencies(dependsOn: Array<string | { stepName: string, itemIdentifier: string | null }>): Promise<Map<string, ProcessStepStateInterface | ProcessStepStateInterface[]>> {
+        const dependenciesStates: Array<[string, ProcessStepStateInterface | ProcessStepStateInterface[]]> = []
         for (const entry of dependsOn) {
             const dependencyStepName = (typeof entry === 'string') ? entry : entry.stepName
             const itemIdentifier = (typeof entry === 'string') ? undefined : entry.itemIdentifier
-            let dependencyState = null
+            let dependencyState: ProcessStepStateInterface | ProcessStepStateInterface[] | null
             if (this.isArrayItemStep(dependencyStepName)) {
                 // retrieve dependency state for specific item in array item steps
                 if (itemIdentifier !== undefined) {
@@ -180,7 +180,7 @@ export abstract class GenericProcess<inputType = unknown> extends EventEmitter i
      * @description This method is used to run whole process of steps.
      * @param throwError optional param which says whether to throw an exception
      */
-    async run (throwError = false): Promise<void> {
+    async run(throwError = false): Promise<void> {
         this.emit('start', { processName: this.processName })
         this._processingState = ProcessingState.Running
         // iterate over steps
@@ -264,15 +264,15 @@ export abstract class GenericProcess<inputType = unknown> extends EventEmitter i
      * @returns {(Promise<ProcessStepStateInterface|null>)}
      * @memberof GenericProcess
      */
-    async runStep (stepName: string, itemIdentifier: string|number|null = null, throwError = false, additionalArguments: null|Record<string, any> = null): Promise<ProcessStepStateInterface|null> {
+    async runStep(stepName: string, itemIdentifier: string | number | null = null, throwError = false, additionalArguments: null | Record<string, any> = null): Promise<ProcessStepStateInterface | null> {
         for (const step of this._steps) {
             // check common interface
             if (this.implementsStepInterface(step)) {
                 // check if step is array item step type
                 const isArrayStep = this.implementsArrayItemStepInterface(step)
                 if (
-                    step.stepName === stepName &&
-                    (!isArrayStep || (isArrayStep && step.itemIdentifier === itemIdentifier))
+                    step.stepName === stepName
+                    && (!isArrayStep || (isArrayStep && step.itemIdentifier === itemIdentifier))
                 ) {
                     // add reference to current process
                     step.setProcessReference(this)

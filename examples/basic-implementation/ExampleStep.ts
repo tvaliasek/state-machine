@@ -1,13 +1,13 @@
-import { GenericStep, StepInterface, ProcessStepStateInterface } from "../../src"
+import { GenericStep, StepInterface, ProcessStepStateInterface } from '../../src'
 
 export class ExampleStep extends GenericStep<Record<string, any>> implements StepInterface<Record<string, any>> {
-    async doWork (): Promise<ProcessStepStateInterface> {
+    async doWork(): Promise<ProcessStepStateInterface> {
         try {
             if (!this.shouldRun()) {
                 return this.getStepResult()
             }
-            
-            return await (new Promise((resolve, reject) => {
+
+            return await (new Promise<ProcessStepStateInterface>((resolve) => {
                 setTimeout(
                     () => {
                         this.onSuccess(this.state)
@@ -18,7 +18,7 @@ export class ExampleStep extends GenericStep<Record<string, any>> implements Ste
                 )
             }))
         } catch (error) {
-            this.onError(error.message)
+            this.onError((error as Error).message)
             throw error
         }
     }

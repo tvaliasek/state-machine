@@ -4,9 +4,8 @@ import { describe, expect, test } from '@jest/globals'
 class NormalArrayStep extends GenericArrayStep<Record<string, any>> {}
 
 describe('GenericArrayStep basic implementation', () => {
-
     test('getters for coverage', () => {
-        let step = new NormalArrayStep(
+        const step = new NormalArrayStep(
             'fooStep',
             'someId',
             { result: 'foo' },
@@ -31,7 +30,7 @@ describe('GenericArrayStep basic implementation', () => {
     })
 
     test('getStepResult', () => {
-        let step = new NormalArrayStep(
+        const step = new NormalArrayStep(
             'fooStep',
             'someId',
             { result: 'foo' },
@@ -52,9 +51,8 @@ describe('GenericArrayStep basic implementation', () => {
         })
     })
 
-    
     test('setInitialState', () => {
-        let step = new NormalArrayStep(
+        const step = new NormalArrayStep(
             'fooStep',
             'id',
             {},
@@ -92,5 +90,4 @@ describe('GenericArrayStep basic implementation', () => {
             disabled: false
         })).toThrow('Bad arguments: missing required identifier')
     })
-
 })

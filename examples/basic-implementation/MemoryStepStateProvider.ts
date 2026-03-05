@@ -1,17 +1,18 @@
-import { ProcessStepStateInterface } from "../../src"
+import { ProcessStepStateInterface } from '../../src'
 
 export class MemoryStepStateProvider {
-    constructor (
+    constructor(
         public state: Map<string, ProcessStepStateInterface> = new Map([])
     ) {}
 
-    async getStepState (processName: string, stepName: string, itemIdentifier: string|null): Promise<ProcessStepStateInterface|null> {
+    getStepState(processName: string, stepName: string, itemIdentifier: string | null): Promise<ProcessStepStateInterface | null> {
         const entry = this.state.get(`${processName}_${stepName}_${itemIdentifier}`)
-        return entry ?? null
+        return Promise.resolve(entry ?? null)
     }
 
-    async setStepState (processName: string, stepName: string, itemIdentifier: string|null, stepState: ProcessStepStateInterface): Promise<void> {
+    setStepState(processName: string, stepName: string, itemIdentifier: string | null, stepState: ProcessStepStateInterface): Promise<void> {
         console.log(`State for process ${processName}, step ${stepName}, item ${itemIdentifier} has been set.`)
         this.state.set(`${processName}_${stepName}_${itemIdentifier}`, stepState)
+        return Promise.resolve()
     }
 }

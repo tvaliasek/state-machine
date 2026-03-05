@@ -1,9 +1,8 @@
-import { GenericProcess, GenericArrayStep, GenericStep, ProcessStepStateInterface, StepInterface, ArrayItemStepInterface, ProcessingState } from '../src'
+import { ProcessingState } from '../src'
 import { describe, expect, test, beforeEach } from '@jest/globals'
 import { processFactory, defaultState, Step, ArrayItemStep, Process, StepStateProvider, LongStep } from './implementation'
 
 describe('GenericProcess basic implementation', () => {
-
     let process: Process
 
     beforeEach(() => {
@@ -21,24 +20,24 @@ describe('GenericProcess basic implementation', () => {
     })
 
     test('could be constructed', () => {
-        const foo = new Process('foo', [ new Step('s1'), new ArrayItemStep('as1', '1', null, ['s1']) ], new StepStateProvider())
+        const foo = new Process('foo', [new Step('s1'), new ArrayItemStep('as1', '1', null, ['s1'])], new StepStateProvider())
         expect(foo).toBeInstanceOf(Process)
     })
 
     test('couldn\'t be constructed', () => {
-        expect(() => new Process('foo', [ new Step('s1'), new ArrayItemStep('as1', '1', null, ['foo']) ], new StepStateProvider()))
-            .toThrow('Invalid argument steps, step as1 depends on unknown step foo.') 
-        expect(() => new Process('foo', [ new Step('s1'), new Step('s1'), new ArrayItemStep('as1', '1', null, []), new ArrayItemStep('as1', '1', null, []) ], new StepStateProvider()))
+        expect(() => new Process('foo', [new Step('s1'), new ArrayItemStep('as1', '1', null, ['foo'])], new StepStateProvider()))
+            .toThrow('Invalid argument steps, step as1 depends on unknown step foo.')
+        expect(() => new Process('foo', [new Step('s1'), new Step('s1'), new ArrayItemStep('as1', '1', null, []), new ArrayItemStep('as1', '1', null, [])], new StepStateProvider()))
             .toThrow('Invalid argument steps, step s1 is included multiple times.')
-        expect(() => new Process('foo', [ new Step('s1'), new ArrayItemStep('s1', '1', null, []) ], new StepStateProvider()))
-            .toThrow('Invalid argument steps, step s1 is declared as both single and array item step.') 
-        expect(() => new Process('foo', [ new Step('s1'), new ArrayItemStep('as1', '1', null, []), new ArrayItemStep('as1', '1', null, []) ], new StepStateProvider()))
+        expect(() => new Process('foo', [new Step('s1'), new ArrayItemStep('s1', '1', null, [])], new StepStateProvider()))
+            .toThrow('Invalid argument steps, step s1 is declared as both single and array item step.')
+        expect(() => new Process('foo', [new Step('s1'), new ArrayItemStep('as1', '1', null, []), new ArrayItemStep('as1', '1', null, [])], new StepStateProvider()))
             .toThrow('Invalid argument steps, step as1 contains duplicate itemIdentifier values.')
     })
 
     test('process cycle between states', async () => {
         const longStep = new LongStep('l1')
-        const process = new Process('foo', [ longStep ], new StepStateProvider())
+        const process = new Process('foo', [longStep], new StepStateProvider())
         expect(process.processingState).toBe(ProcessingState.Idle)
         const processPromise = process.run()
         expect(process.processingState).toBe(ProcessingState.Running)
@@ -47,35 +46,35 @@ describe('GenericProcess basic implementation', () => {
 
         const failedLongStep = new LongStep('l1')
         failedLongStep.shouldFail = true
-        const failedProcess = new Process('foo', [ failedLongStep ], new StepStateProvider())
+        const failedProcess = new Process('foo', [failedLongStep], new StepStateProvider())
         await failedProcess.run()
-        await new Promise((resolve) => setTimeout(() => resolve(''), 30))
+        await new Promise(resolve => setTimeout(() => resolve(''), 30))
         expect(failedProcess.processingState).toBe(ProcessingState.Failed)
     })
 
     test('getter errror', async () => {
         const step = new Step('l1')
         step.shouldFail = true
-        const process = new Process('foo', [ step ], new StepStateProvider())
+        const process = new Process('foo', [step], new StepStateProvider())
         await process.run()
         expect(process.error).toBe('I was born to fail.')
     })
 
-    test('can get input', async () => {
+    test('can get input', () => {
         expect(process.getProcessInput()).toEqual({ processedInputId: 'someId' })
     })
 
     test('setSteps', async () => {
         const longStep = new LongStep('l1')
-        const process = new Process('foo', [ longStep ], new StepStateProvider())
+        const process = new Process('foo', [longStep], new StepStateProvider())
         expect(process.processingState).toBe(ProcessingState.Idle)
         const processPromise = process.run()
         expect(process.processingState).toBe(ProcessingState.Running)
-        expect(() => process.setSteps([ new Step('s1') ])).toThrow('Cannot change steps during run phase.')
+        expect(() => process.setSteps([new Step('s1')])).toThrow('Cannot change steps during run phase.')
         await processPromise
-        
-        process.setSteps([ new Step('s1') ])
-        expect(process.steps).toStrictEqual([ new Step('s1') ])
+
+        process.setSteps([new Step('s1')])
+        expect(process.steps).toStrictEqual([new Step('s1')])
     })
 
     test('getStepState', async () => {
@@ -95,13 +94,13 @@ describe('GenericProcess basic implementation', () => {
                 ])
             )
 
-        expect(process.resolveStepDependencies(['as1']))
+        await expect(process.resolveStepDependencies(['as1']))
             .rejects
             .toThrow('Missing succeeded dependency state of step as1, item identifier: 1')
 
         await process.run()
 
-        const expectedResult = defaultState.filter(item => item.stepName === 'as1').map(item => { 
+        const expectedResult = defaultState.filter(item => item.stepName === 'as1').map((item) => {
             const state = item.state
             state.success = true
             return state
@@ -136,12 +135,12 @@ describe('GenericProcess basic implementation', () => {
         process.on('done', (data) => {
             events.push({ event: 'done', data })
         })
-        
+
         await process.run()
 
         expect(events).toStrictEqual([
             { event: 'start', data: { processName: 'process' } },
-            { 
+            {
                 event: 'step-done',
                 data: {
                     processName: 'process',
@@ -155,10 +154,10 @@ describe('GenericProcess basic implementation', () => {
                         errorMessage: null,
                         itemIdentifier: null,
                         disabled: false
-                    } 
-                } 
+                    }
+                }
             },
-            { 
+            {
                 event: 'step-done',
                 data: {
                     processName: 'process',
@@ -172,10 +171,10 @@ describe('GenericProcess basic implementation', () => {
                         errorMessage: null,
                         itemIdentifier: null,
                         disabled: false
-                    } 
-                } 
+                    }
+                }
             },
-            { 
+            {
                 event: 'step-done',
                 data: {
                     processName: 'process',
@@ -189,10 +188,10 @@ describe('GenericProcess basic implementation', () => {
                         errorMessage: null,
                         itemIdentifier: '1',
                         disabled: false
-                    } 
-                } 
+                    }
+                }
             },
-            { 
+            {
                 event: 'step-done',
                 data: {
                     processName: 'process',
@@ -206,11 +205,10 @@ describe('GenericProcess basic implementation', () => {
                         errorMessage: null,
                         itemIdentifier: '2',
                         disabled: false
-                    } 
-                } 
+                    }
+                }
             },
             { event: 'done', data: { processName: 'process' } }
         ])
     })
 })
- 

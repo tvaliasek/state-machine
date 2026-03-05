@@ -1,9 +1,9 @@
 export interface ProcessStepStateInterface {
-    state: Record<string, any>|null
+    state: Record<string, any> | null
     success: boolean
     skipped: boolean
     disabled: boolean
     error: boolean
-    errorMessage?: string|null
-    itemIdentifier?: string|null
+    errorMessage?: string | null
+    itemIdentifier?: string | null
 }

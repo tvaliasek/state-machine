@@ -1,13 +1,12 @@
 import { GenericStep } from '../src'
-import { describe, expect, test, beforeEach } from '@jest/globals'
+import { describe, expect, test } from '@jest/globals'
 import { processFactory } from './implementation'
 
 class NormalStep extends GenericStep<Record<string, any>> {}
 
 describe('GenericStep basic implementation', () => {
-
     test('getters for coverage', () => {
-        let step = new NormalStep(
+        const step = new NormalStep(
             'fooStep',
             { result: 'foo' },
             [],
@@ -76,7 +75,7 @@ describe('GenericStep basic implementation', () => {
     })
 
     test('onError', () => {
-        let step = new NormalStep(
+        const step = new NormalStep(
             'fooStep',
             { result: 'foo' },
             [],
@@ -97,7 +96,7 @@ describe('GenericStep basic implementation', () => {
     })
 
     test('onSuccess', () => {
-        let step = new NormalStep(
+        const step = new NormalStep(
             'fooStep',
             { result: 'foo' },
             [],
@@ -118,7 +117,7 @@ describe('GenericStep basic implementation', () => {
     })
 
     test('onSkipped', () => {
-        let step = new NormalStep(
+        const step = new NormalStep(
             'fooStep',
             { result: 'foo' },
             [],
@@ -139,7 +138,7 @@ describe('GenericStep basic implementation', () => {
     })
 
     test('setStateOfDependencies', () => {
-        let step = new NormalStep(
+        const step = new NormalStep(
             'fooStep',
             { result: 'foo' },
             [],
@@ -154,7 +153,7 @@ describe('GenericStep basic implementation', () => {
     })
 
     test('setInitialState', () => {
-        let step = new NormalStep(
+        const step = new NormalStep(
             'fooStep',
             {},
             [],
@@ -183,7 +182,7 @@ describe('GenericStep basic implementation', () => {
     })
 
     test('shouldRun', () => {
-        let step = new NormalStep(
+        const step = new NormalStep(
             'fooStep',
             {},
             [],
@@ -228,7 +227,7 @@ describe('GenericStep basic implementation', () => {
 
     test('step can access process and input', () => {
         const process = processFactory([], [])
-        let step = new NormalStep(
+        const step = new NormalStep(
             'fooStep',
             {},
             [],
@@ -240,5 +239,4 @@ describe('GenericStep basic implementation', () => {
         expect(step.process).toStrictEqual(process)
         expect(step.process?.getProcessInput()).toStrictEqual({ processedInputId: 'someId' })
     })
-
 })
