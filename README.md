@@ -1,209 +1,256 @@
-# Generic state machine
+# @tvaliasek/state-machine
 
-A simple but useful DIY framework for building state machines. We use it in several projects for complex user data exports to integrated business systems.
+A TypeScript library for building finite state machines as multi-step processing pipelines. Each step produces persisted state, declares dependencies on other steps, and can be resumed across multiple runs. Used in production for complex data export and integration workflows.
 
-## Basic concepts
+## Concepts
 
-Using this library, you can arrange multiple units of work - "**steps**" in processing pipeline - "**process**". Each step can be dependent on other steps state and produces its own state. This state is then persisted and retrieved by process state provider, which must be implemented. Each step can end in one of three states - success, skipped or failed.
+- **Process** — orchestrates step execution, dependency resolution, and state persistence. Emits lifecycle events.
+- **Step** — a single unit of work. Implements `doWork()`, optionally overrides `shouldRun()`. State is keyed by `processName + stepName`.
+- **Array step** — a step variant for processing multiple items under the same step name. State is keyed by `processName + stepName + itemIdentifier`.
+- **State provider** — a consumer-supplied adapter implementing `ProcessStateProviderInterface`, backed by any storage (database, in-memory, etc.).
 
-## Usage
+Each step terminates in one of three outcomes: `success`, `skipped`, or `failed`.
 
-1. Install package
+## Installation
 
-``` sh
-$ npm install @tvaliasek/state-machine
+```sh
+npm install @tvaliasek/state-machine
 ```
 
-2. Bring your own classes that implement the appropriate interface (see the docs below), you can extend generic abstract classes and run the process.
+## Quick start
 
-``` ts
-import { GenericProcess } from "../../src";
-import { ExampleArrayItemStep } from "./ExampleArrayItemStep";
-import { ExampleStep } from "./ExampleStep";
-import { MemoryStepStateProvider } from './MemoryStepStateProvider'
+```ts
+import { GenericProcess } from "@tvaliasek/state-machine"
+import { ExampleArrayItemStep } from "./ExampleArrayItemStep"
+import { ExampleStep } from "./ExampleStep"
+import { MemoryStepStateProvider } from "./MemoryStepStateProvider"
 
-class Process extends GenericProcess {}
+class MyProcess extends GenericProcess {}
 
-const stateProvider = new MemoryStepStateProvider()
-
-const instance = new Process(
-    'exampleProcess', 
+const process = new MyProcess(
+    "exampleProcess",
     [
-        new ExampleStep('step1'),
-        new ExampleStep('step2'),
-        new ExampleArrayItemStep('arrayItemStep1', '1'),
-        new ExampleArrayItemStep('arrayItemStep1', '2'),
-        new ExampleArrayItemStep('arrayItemStep1', '3')
+        new ExampleStep("step1"),
+        new ExampleStep("step2"),
+        new ExampleArrayItemStep("arrayItemStep1", "1"),
+        new ExampleArrayItemStep("arrayItemStep1", "2"),
+        new ExampleArrayItemStep("arrayItemStep1", "3"),
     ],
-    stateProvider
+    new MemoryStepStateProvider()
 )
 
-instance.run()
-    .then(() => {
-        console.log('Process has been finished')
-    }).catch((error) => {
-        console.error(error)
-    })
+await process.run()
 ```
 
-## The docs below :)
+## API
 
-### Classes
+### `GenericProcess<inputType>`
 
-There are several basic abstract classes to extend from.
+Orchestrator class. Extend it directly if no customization is needed.
 
-#### GenericProcess
-This is the main class containing all the logic needed to run all steps, validate and resolve their dependencies and retrieve and save step states. If you do not need anything custom, you can simply extend it.
-
-You can pass the processed input as the last parameter of the constructor. Then the input will be accessible from all the steps via a process reference (`this.process.getProcessedInput()`). 
-
-The generic class is an event emitter, so you can listen for events:
-
-| event | data | description | 
-|-------|------|-------------|
-| `start` | `{ processName: string }` | emitted on start of run |
-| `step-start` | `{ processName: string, stepName: string, itemIdentifier: string\|null }` | emitted before doWork method is called |
-| `step-done` | `{ processName: string, stepName: string, itemIdentifier: string\|null, state: ProcessStepStateInterface }` | emitted after successful doWork method call |
-| `step-error` | `{ processName: string, stepName: string, itemIdentifier: string\|null, error: Error }` | emitted when any error is thrown from doWork method |
-| `done` | `{ processName: string }` | emitted on end of run |
-
-*Example:*
-
-``` ts
-import { GenericProcess } from "@tvaliasek/state-machine"
-
-class Process extends GenericProcess {}
+**Constructor:**
+```ts
+constructor(
+    processName: string,
+    steps: Array<StepInterface<unknown> | ArrayItemStepInterface<unknown>>,
+    stepStateProvider: ProcessStateProviderInterface,
+    processedInput?: inputType | null
+)
 ```
 
-#### GenericStep
-Abstract class representing common step. You can customize inner logic to your needs, but you must implement at least doWork method. And you probably want to customize shouldRun method. Its state is maintained by combination of process name and step name.
+**Methods:**
 
-If you define a dependency on the successful execution of the other steps (third constructor parameter), you can access it from context property on `this.stateOfDependencies`. This property contains `Map<stringNameOfStep, ProcessStepStateInterface|ProcessStepStateInterface[]>`.
+| Method | Description |
+|--------|-------------|
+| `run(throwError?)` | Executes all steps in order. If `throwError` is `false` (default), errors are caught, recorded, and emitted — execution halts. If `true`, errors propagate. |
+| `runStep(stepName, itemIdentifier?, throwError?, additionalArguments?)` | Executes a single step by name. `additionalArguments` is passed to `doWork()`. |
+| `getStepState(stepName)` | Returns persisted state for a step (`ProcessStepStateInterface` or `ProcessStepStateInterface[]` for array steps). |
+| `getProcessInput<T>()` | Returns the `processedInput` passed to the constructor, accessible from steps via `this.process.getProcessInput()`. |
+| `setSteps(steps)` | Replaces the step list. Throws if the process is `Running`. |
 
-You can also access the process on context property `this.process`.
+**Events:**
 
-*Example:*
+| Event | Payload | Trigger |
+|-------|---------|---------|
+| `start` | `{ processName }` | Before first step |
+| `step-start` | `{ processName, stepName, itemIdentifier }` | Before `doWork()` |
+| `step-done` | `{ processName, stepName, itemIdentifier, state }` | After successful `doWork()` |
+| `step-error` | `{ processName, stepName, itemIdentifier, error }` | On any thrown error |
+| `done` | `{ processName }` | After last step (regardless of outcome) |
 
-``` ts
+**Processing states** (`ProcessingState` enum): `Idle` → `Running` → `Done` | `Failed`
+
+---
+
+### `GenericStep<stateType>`
+
+Abstract base for single-item steps. Must implement `doWork()`.
+
+**Constructor:**
+```ts
+constructor(
+    stepName: string,
+    state?: stateType | null,
+    dependsOn?: Array<string | { stepName: string, itemIdentifier: string | null }>,
+    success?: boolean,
+    skipped?: boolean,
+    error?: string | null,
+    disabled?: boolean
+)
+```
+
+**Lifecycle methods** (call inside `doWork()`):
+
+| Method | Description |
+|--------|-------------|
+| `shouldRun()` | Returns `true` if step is not already succeeded, skipped, or disabled. |
+| `onSuccess(state?)` | Marks step as succeeded, sets state. |
+| `onSkipped(state?)` | Marks step as skipped. |
+| `onError(message)` | Marks step as failed with an error message. |
+| `getStepResult()` | Returns the current `ProcessStepStateInterface` to return from `doWork()`. |
+
+**Context accessors:**
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `this.stateOfDependencies` | `Map<string, ProcessStepStateInterface \| ProcessStepStateInterface[]>` | Resolved state of declared dependencies |
+| `this.process` | `ProcessInterface \| null` | Reference to the owning process |
+
+**Example:**
+
+```ts
 import { GenericStep, StepInterface, ProcessStepStateInterface } from "@tvaliasek/state-machine"
 
-export class ExampleStep extends GenericStep<Record<string, any>> implements StepInterface<Record<string, any>> {
-    async doWork (): Promise<ProcessStepStateInterface> {
+export class ExampleStep extends GenericStep<Record<string, unknown>> implements StepInterface<Record<string, unknown>> {
+    async doWork(): Promise<ProcessStepStateInterface> {
+        if (!this.shouldRun()) {
+            return this.getStepResult()
+        }
         try {
-            if (!this.shouldRun()) {
-                return this.getStepResult()
-            }
-            
-            return await (new Promise((resolve, reject) => {
-                setTimeout(
-                    () => {
-                        this.onSuccess(this.state)
-                        console.log({ step: this.stepName, item: null })
-                        resolve(this.getStepResult())
-                    },
-                    250
-                )
-            }))
+            // perform work here
+            this.onSuccess({ result: "done" })
+            return this.getStepResult()
         } catch (error) {
-            this.onError(error.message)
+            this.onError((error as Error).message)
             throw error
         }
     }
 }
 ```
 
-#### GenericArrayStep
-GenericArrayStep is just like GenericStep, but it is meant to be used as one step repeatedly used on multiple items. For this reason, its state is maintained by combination of process name, step name and specific processed item identifier. 
+---
 
-*Example:*
+### `GenericArrayStep<stateType>`
 
-``` ts
+Extends `GenericStep`. Use when the same logical step is applied to multiple items — each instance is identified by a unique `itemIdentifier`. State is keyed by `processName + stepName + itemIdentifier`.
+
+**Constructor:**
+```ts
+constructor(
+    stepName: string,
+    itemIdentifier: string,
+    state?: stateType | null,
+    dependsOn?: Array<string | { stepName: string, itemIdentifier: string | null }>,
+    success?: boolean,
+    skipped?: boolean,
+    error?: string | null,
+    disabled?: boolean
+)
+```
+
+**Example:**
+
+```ts
 import { GenericArrayStep, ArrayItemStepInterface, ProcessStepStateInterface } from "@tvaliasek/state-machine"
 
-export class ExampleArrayItemStep extends GenericArrayStep<Record<string, any>> implements ArrayItemStepInterface<Record<string, any>> {
-    async doWork (): Promise<ProcessStepStateInterface> {
+export class ExampleArrayItemStep extends GenericArrayStep<Record<string, unknown>> implements ArrayItemStepInterface<Record<string, unknown>> {
+    async doWork(): Promise<ProcessStepStateInterface> {
+        if (!this.shouldRun()) {
+            return this.getStepResult()
+        }
         try {
-            if (!this.shouldRun()) {
-                return this.getStepResult()
-            }
-            
-            return await (new Promise((resolve, reject) => {
-                setTimeout(
-                    () => {
-                        this.onSuccess(this.state)
-                        console.log({ step: this.stepName, item: this.itemIdentifier })
-                        resolve(this.getStepResult())
-                    },
-                    250
-                )
-            }))
+            // process this.itemIdentifier
+            this.onSuccess({ itemIdentifier: this.itemIdentifier })
+            return this.getStepResult()
         } catch (error) {
-            this.onError(error.message)
+            this.onError((error as Error).message)
             throw error
         }
     }
 }
 ```
 
-### State provider
+---
 
-State provider could be instance of class implementing two methods:
+### `ProcessStateProviderInterface`
 
-``` ts
+Consumer-supplied persistence adapter. The library does not impose a storage backend.
+
+```ts
 export interface ProcessStateProviderInterface {
-    getStepState (processName: string, stepName: string, itemIdentifier: string|null): Promise<ProcessStepStateInterface|null>
-    setStepState (processName: string, stepName: string, itemIdentifier: string|null, stepState: ProcessStepStateInterface): Promise<void>
+    getStepState(processName: string, stepName: string, itemIdentifier: string | null): Promise<ProcessStepStateInterface | null>
+    setStepState(processName: string, stepName: string, itemIdentifier: string | null, stepState: ProcessStepStateInterface): Promise<void>
 }
 ```
-*Example:*
-``` ts
+
+**In-memory example:**
+
+```ts
 import { ProcessStepStateInterface } from "@tvaliasek/state-machine"
 
 export class MemoryStepStateProvider {
-    constructor (
-        public state: Map<string, ProcessStepStateInterface> = new Map([])
-    ) {}
+    private state = new Map<string, ProcessStepStateInterface>()
 
-    async getStepState (processName: string, stepName: string, itemIdentifier: string|null): Promise<ProcessStepStateInterface|null> {
-        const entry = this.state.get(`${processName}_${stepName}_${itemIdentifier}`)
-        return entry ?? null
+    async getStepState(processName: string, stepName: string, itemIdentifier: string | null): Promise<ProcessStepStateInterface | null> {
+        return this.state.get(`${processName}_${stepName}_${itemIdentifier}`) ?? null
     }
 
-    async setStepState (processName: string, stepName: string, itemIdentifier: string|null, stepState: ProcessStepStateInterface): Promise<void> {
-        console.log(`State for process ${processName}, step ${stepName}, item ${itemIdentifier} has been set.`)
+    async setStepState(processName: string, stepName: string, itemIdentifier: string | null, stepState: ProcessStepStateInterface): Promise<void> {
         this.state.set(`${processName}_${stepName}_${itemIdentifier}`, stepState)
     }
 }
 ```
 
-In our case, we use factory methods to instantiate state providers scoped to specific record of processed items.
+For multi-tenant or record-scoped scenarios, scope the state provider to a specific record identifier via a factory:
 
-*Example:*
-``` ts
-import { ProcessStepStateInterface } from "@tvaliasek/state-machine"
-
+```ts
 export class ScopedMemoryStepStateProvider {
-    constructor (
-        protected readonly processedItemId: string,
-        public state: Map<string, ProcessStepStateInterface> = new Map([])
-    ) {}
+    private state = new Map<string, ProcessStepStateInterface>()
 
-    async getStepState (processName: string, stepName: string, itemIdentifier: string|null): Promise<ProcessStepStateInterface|null> {
-        const entry = this.state.get(`${this.processedItemId}_${processName}_${stepName}_${itemIdentifier}`)
-        return entry ?? null
-    }
+    constructor(private readonly processedItemId: string) {}
 
-    async setStepState (processName: string, stepName: string, itemIdentifier: string|null, stepState: ProcessStepStateInterface): Promise<void> {
-        console.log(`State for process ${processName}, step ${stepName}, item ${itemIdentifier} has been set.`)
-        this.state.set(`${this.processedItemId}_${processName}_${stepName}_${itemIdentifier}`, stepState)
-    }
-
-    // factory method
-    public static createForRecord (id: string): ScopedMemoryStepStateProvider {
+    static createForRecord(id: string): ScopedMemoryStepStateProvider {
         return new ScopedMemoryStepStateProvider(id)
     }
+
+    async getStepState(processName: string, stepName: string, itemIdentifier: string | null): Promise<ProcessStepStateInterface | null> {
+        return this.state.get(`${this.processedItemId}_${processName}_${stepName}_${itemIdentifier}`) ?? null
+    }
+
+    async setStepState(processName: string, stepName: string, itemIdentifier: string | null, stepState: ProcessStepStateInterface): Promise<void> {
+        this.state.set(`${this.processedItemId}_${processName}_${stepName}_${itemIdentifier}`, stepState)
+    }
 }
-
-const stateProvider = ScopedMemoryStepStateProvider.createForRecord('someId')
-
 ```
+
+---
+
+### `ProcessStepStateInterface`
+
+Shape of persisted step state:
+
+```ts
+export interface ProcessStepStateInterface {
+    state: Record<string, unknown> | null
+    success: boolean
+    skipped: boolean
+    disabled: boolean
+    error: boolean
+    errorMessage?: string | null
+    itemIdentifier?: string | null
+}
+```
+
+## License
+
+MIT

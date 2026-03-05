@@ -12,7 +12,7 @@ export abstract class GenericStep<stateType> {
     protected _success: boolean
     protected _skipped: boolean
     protected _disabled: boolean
-    protected _error: null | string
+    protected _error: string | null
     protected _stateOfDependencies: Map<string, unknown>
     protected _process: ProcessInterface | null = null
 
@@ -22,7 +22,7 @@ export abstract class GenericStep<stateType> {
         dependsOn: Array<string | { stepName: string, itemIdentifier: string | null }> = [],
         success = false,
         skipped = false,
-        error: null | string = null,
+        error: string | null = null,
         disabled = false
     ) {
         this._stepName = stepName
@@ -59,7 +59,7 @@ export abstract class GenericStep<stateType> {
         return this._skipped
     }
 
-    get error(): null | string {
+    get error(): string | null {
         return this._error
     }
 

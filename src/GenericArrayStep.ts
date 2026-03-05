@@ -15,7 +15,7 @@ export class GenericArrayStep<stateType> extends GenericStep<stateType> {
         dependsOn: Array<string | { stepName: string, itemIdentifier: string | null }> = [],
         success = false,
         skipped = false,
-        error: null | string = null,
+        error: string | null = null,
         disabled = false
     ) {
         super(
@@ -41,7 +41,7 @@ export class GenericArrayStep<stateType> extends GenericStep<stateType> {
         return {
             success: this.success,
             error: this.error !== null,
-            errorMessage: this.error,
+            errorMessage: this.error ?? null,
             skipped: this.skipped,
             state: (this.state) ? { ...this.state } : null,
             itemIdentifier: this.itemIdentifier,

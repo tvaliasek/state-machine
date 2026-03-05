@@ -7,9 +7,9 @@ export interface StepInterface<stateType> {
     get dependsOn (): Array<string | { stepName: string, itemIdentifier: string | null }>
     get success (): boolean
     get skipped (): boolean
-    get error (): null | string
+    get error (): string | null
 
-    doWork(additionalArguments?: Record<string, any>): Promise<ProcessStepStateInterface>
+    doWork(additionalArguments?: Record<string, unknown>): Promise<ProcessStepStateInterface>
     setStateOfDependencies(states: Map<string, ProcessStepStateInterface | ProcessStepStateInterface[]>): void
     setInitialState (stepState: ProcessStepStateInterface): void
     onSuccess(state: stateType | null): void

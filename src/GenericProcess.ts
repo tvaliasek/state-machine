@@ -100,8 +100,8 @@ export abstract class GenericProcess<inputType = unknown> extends EventEmitter i
         }
         for (const stepName of arrayStepNames) {
             const arrayStepIdentifiers: string[] = this.steps
-                .filter(item => this.implementsArrayItemStepInterface(item) && item.stepName === stepName)
-                .map((item: Record<string, any>) => item.itemIdentifier)
+                .filter((item): item is ArrayItemStepInterface<unknown> => this.implementsArrayItemStepInterface(item) && item.stepName === stepName)
+                .map(item => item.itemIdentifier)
             if (arrayStepIdentifiers.length !== [...new Set(arrayStepIdentifiers)].length) {
                 throw new Error(`Invalid argument steps, step ${stepName} contains duplicate itemIdentifier values.`)
             }
@@ -116,7 +116,7 @@ export abstract class GenericProcess<inputType = unknown> extends EventEmitter i
         return this._processingState
     }
 
-    protected implementsStepInterface(input: any): input is StepInterface<unknown> {
+    protected implementsStepInterface(input: unknown): input is StepInterface<unknown> {
         return (input as StepInterface<unknown>).stepName !== undefined
     }
 
@@ -124,7 +124,7 @@ export abstract class GenericProcess<inputType = unknown> extends EventEmitter i
      * @description Method that decides whether input implements StepInterface
      * @param input usually step
      */
-    protected implementsArrayItemStepInterface(input: any): input is ArrayItemStepInterface<unknown> {
+    protected implementsArrayItemStepInterface(input: unknown): input is ArrayItemStepInterface<unknown> {
         return this.implementsStepInterface(input) && (input as ArrayItemStepInterface<unknown>).itemIdentifier !== undefined
     }
 
@@ -264,7 +264,7 @@ export abstract class GenericProcess<inputType = unknown> extends EventEmitter i
      * @returns {(Promise<ProcessStepStateInterface|null>)}
      * @memberof GenericProcess
      */
-    async runStep(stepName: string, itemIdentifier: string | number | null = null, throwError = false, additionalArguments: null | Record<string, any> = null): Promise<ProcessStepStateInterface | null> {
+    async runStep(stepName: string, itemIdentifier: string | number | null = null, throwError = false, additionalArguments: Record<string, unknown> | null = null): Promise<ProcessStepStateInterface | null> {
         for (const step of this._steps) {
             // check common interface
             if (this.implementsStepInterface(step)) {
