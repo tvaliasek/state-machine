@@ -1,15 +1,15 @@
 {
     "name": "@tvaliasek/state-machine",
-    "version": "2.0.0",
+    "version": "2.0.1",
     "description": "Very basic framework for building state machines.",
     "type": "module",
     "main": "./dist/index.cjs",
     "module": "./dist/index.js",
-    "types": "./dist/index.d.ts",
+    "types": "./dist/index.d.cts",
     "exports": {
         ".": {
             "import": {
-                "types": "./dist/index.d.ts",
+                "types": "./dist/index.d.mts",
                 "default": "./dist/index.js"
             },
             "require": {
@@ -19,7 +19,7 @@
         },
         "./*": {
             "import": {
-                "types": "./dist/*.d.ts",
+                "types": "./dist/*.d.mts",
                 "default": "./dist/*.js"
             },
             "require": {
