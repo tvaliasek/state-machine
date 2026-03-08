@@ -87,11 +87,14 @@ export abstract class GenericStep<stateType> {
         }
     }
 
-    onError(error: string): void {
+    onError(error: string, state?: stateType | null): void {
         this._error = error
         this._skipped = false
         this._success = false
         this._disabled = false
+        if (state !== undefined) {
+            this._state = state
+        }
     }
 
     onSuccess(state: stateType | null = null): void {
