@@ -1,8 +1,12 @@
-import { GenericStep } from '../src'
+import { GenericStep, ProcessStepStateInterface } from '../src'
 import { describe, expect, test } from '@jest/globals'
 import { processFactory } from './implementation'
 
-class NormalStep extends GenericStep<Record<string, any>> {}
+class NormalStep extends GenericStep<Record<string, any>> {
+    doWork(): Promise<ProcessStepStateInterface<Record<string, any>>> {
+        return Promise.resolve(this.getStepResult())
+    }
+}
 
 describe('GenericStep basic implementation', () => {
     test('getters for coverage', () => {
@@ -146,9 +150,21 @@ describe('GenericStep basic implementation', () => {
             false,
             null
         )
-        step.setStateOfDependencies(new Map([['barStep', { barStepState: 'bar' }]]))
+        step.setStateOfDependencies(new Map([['barStep', {
+            state: { barStepState: 'bar' },
+            success: true,
+            skipped: false,
+            error: false,
+            disabled: false
+        }]]))
         expect(step.stateOfDependencies).toStrictEqual(
-            new Map([['barStep', { barStepState: 'bar' }]])
+            new Map([['barStep', {
+                state: { barStepState: 'bar' },
+                success: true,
+                skipped: false,
+                error: false,
+                disabled: false
+            }]])
         )
     })
 

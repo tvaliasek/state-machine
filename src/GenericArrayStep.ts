@@ -5,13 +5,13 @@ import { ProcessStepStateInterface } from './ProcessStepState.interface'
  * @classdesc Generic class representing same multiple steps in finite state machine.
  * @extends GenericStep
  */
-export class GenericArrayStep<stateType> extends GenericStep<stateType> {
+export abstract class GenericArrayStep<TState extends Record<string, unknown> = Record<string, unknown>> extends GenericStep<TState> {
     protected _itemIdentifier: string
 
     constructor(
         stepName: string,
         itemIdentifier: string,
-        state: stateType | null = null,
+        state: TState | null = null,
         dependsOn: Array<string | { stepName: string, itemIdentifier: string | null }> = [],
         success = false,
         skipped = false,
@@ -37,21 +37,22 @@ export class GenericArrayStep<stateType> extends GenericStep<stateType> {
         return this._itemIdentifier
     }
 
-    getStepResult(): ProcessStepStateInterface {
+    getStepResult(): ProcessStepStateInterface<TState> {
+        const currentState: TState | null = this.state
         return {
             success: this.success,
             error: this.error !== null,
             errorMessage: this.error ?? null,
             skipped: this.skipped,
-            state: (this.state) ? { ...this.state } : null,
+            state: currentState !== null ? { ...currentState } : null,
             itemIdentifier: this.itemIdentifier,
             disabled: this.disabled
         }
     }
 
-    setInitialState(stepState: ProcessStepStateInterface): void {
+    setInitialState(stepState: ProcessStepStateInterface<TState>): void {
         super.setInitialState(stepState)
-        if (!stepState.itemIdentifier) {
+        if (stepState.itemIdentifier === null || stepState.itemIdentifier === undefined) {
             throw new Error('Bad arguments: missing required identifier')
         }
         this._itemIdentifier = stepState.itemIdentifier

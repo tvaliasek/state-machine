@@ -1,5 +1,5 @@
-export interface ProcessStepStateInterface {
-    state: Record<string, any> | null
+export interface ProcessStepStateInterface<TState extends Record<string, unknown> = Record<string, unknown>> {
+    state: TState | null
     success: boolean
     skipped: boolean
     disabled: boolean

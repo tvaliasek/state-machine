@@ -1,7 +1,11 @@
-import { GenericArrayStep } from '../src'
+import { GenericArrayStep, ProcessStepStateInterface } from '../src'
 import { describe, expect, test } from '@jest/globals'
 
-class NormalArrayStep extends GenericArrayStep<Record<string, any>> {}
+class NormalArrayStep extends GenericArrayStep<Record<string, any>> {
+    doWork(): Promise<ProcessStepStateInterface<Record<string, any>>> {
+        return Promise.resolve(this.getStepResult())
+    }
+}
 
 describe('GenericArrayStep basic implementation', () => {
     test('getters for coverage', () => {

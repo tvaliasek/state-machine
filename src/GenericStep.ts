@@ -3,22 +3,22 @@ import { ProcessStepStateInterface } from './ProcessStepState.interface'
 
 /**
  * @classdesc Generic class representing step in finite state machine.
- * @template stateType
+ * @template TState
  */
-export abstract class GenericStep<stateType> {
+export abstract class GenericStep<TState extends Record<string, unknown> = Record<string, unknown>> {
     protected _stepName: string
-    protected _state: stateType | null
+    protected _state: TState | null
     protected _dependsOn: Array<string | { stepName: string, itemIdentifier: string | null }>
     protected _success: boolean
     protected _skipped: boolean
     protected _disabled: boolean
     protected _error: string | null
-    protected _stateOfDependencies: Map<string, unknown>
+    protected _stateOfDependencies: Map<string, ProcessStepStateInterface | ProcessStepStateInterface[]>
     protected _process: ProcessInterface | null = null
 
     constructor(
         stepName: string,
-        state: stateType | null = null,
+        state: TState | null = null,
         dependsOn: Array<string | { stepName: string, itemIdentifier: string | null }> = [],
         success = false,
         skipped = false,
@@ -32,14 +32,14 @@ export abstract class GenericStep<stateType> {
         this._skipped = skipped
         this._error = error
         this._disabled = disabled
-        this._stateOfDependencies = new Map()
+        this._stateOfDependencies = new Map<string, ProcessStepStateInterface | ProcessStepStateInterface[]>()
     }
 
     get stepName(): string {
         return this._stepName
     }
 
-    get state(): stateType | null {
+    get state(): TState | null {
         return this._state
     }
 
@@ -63,7 +63,7 @@ export abstract class GenericStep<stateType> {
         return this._error
     }
 
-    get stateOfDependencies(): Map<string, unknown> {
+    get stateOfDependencies(): Map<string, ProcessStepStateInterface | ProcessStepStateInterface[]> {
         return this._stateOfDependencies
     }
 
@@ -75,19 +75,20 @@ export abstract class GenericStep<stateType> {
         this._process = process
     }
 
-    getStepResult(): ProcessStepStateInterface {
+    getStepResult(): ProcessStepStateInterface<TState> {
+        const currentState: TState | null = this.state
         return {
             success: this.success,
             error: this.error !== null,
             errorMessage: this.error ?? null,
             skipped: this.skipped,
-            state: (this.state) ? { ...this.state } : null,
+            state: currentState !== null ? { ...currentState } : null,
             itemIdentifier: null,
             disabled: this.disabled
         }
     }
 
-    onError(error: string, state?: stateType | null): void {
+    onError(error: string, state?: TState | null): void {
         this._error = error
         this._skipped = false
         this._success = false
@@ -97,7 +98,7 @@ export abstract class GenericStep<stateType> {
         }
     }
 
-    onSuccess(state: stateType | null = null): void {
+    onSuccess(state: TState | null = null): void {
         this._error = null
         this._skipped = false
         this._success = true
@@ -105,7 +106,7 @@ export abstract class GenericStep<stateType> {
         this._state = state
     }
 
-    onSkipped(state: stateType | null | undefined = undefined): void {
+    onSkipped(state: TState | null | undefined = undefined): void {
         this._error = null
         this._skipped = true
         this._success = false
@@ -115,16 +116,18 @@ export abstract class GenericStep<stateType> {
         }
     }
 
-    setStateOfDependencies(states: Map<string, unknown>): void {
+    setStateOfDependencies(states: Map<string, ProcessStepStateInterface | ProcessStepStateInterface[]>): void {
         this._stateOfDependencies = states
     }
 
-    setInitialState(stepState: ProcessStepStateInterface): void {
-        this._state = stepState.state as stateType
+    setInitialState(stepState: ProcessStepStateInterface<TState>): void {
+        this._state = stepState.state
         this._success = stepState.success
         this._skipped = stepState.skipped
         this._disabled = stepState.disabled
     }
+
+    abstract doWork(additionalArguments?: Record<string, unknown>): Promise<ProcessStepStateInterface<TState>>
 
     shouldRun(): boolean {
         return !(this.success || this.skipped || this.disabled)

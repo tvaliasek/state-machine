@@ -26,17 +26,17 @@ import { ProcessInterface } from './Process.interface'
 }
 *
  */
-export abstract class GenericProcess<inputType = unknown> extends EventEmitter implements ProcessInterface {
+export abstract class GenericProcess<TInput = unknown> extends EventEmitter implements ProcessInterface {
     protected _processingState: ProcessingState = ProcessingState.Idle
     protected _stepStates: ProcessStepStateInterface[] = []
     protected _error: string | null = null
-    protected _steps: Array<StepInterface<unknown> | ArrayItemStepInterface<unknown>>
+    protected _steps: Array<StepInterface | ArrayItemStepInterface>
 
     constructor(
         public readonly processName: string,
-        steps: Array<StepInterface<unknown> | ArrayItemStepInterface<unknown>>,
+        steps: Array<StepInterface | ArrayItemStepInterface>,
         protected readonly stepStateProvider: ProcessStateProviderInterface,
-        protected processedInput: inputType | null = null
+        protected processedInput: TInput | null = null
     ) {
         super()
         this._steps = steps
@@ -44,15 +44,15 @@ export abstract class GenericProcess<inputType = unknown> extends EventEmitter i
         this.checkStepsValidity()
     }
 
-    get steps(): Array<StepInterface<unknown> | ArrayItemStepInterface<unknown>> {
+    get steps(): Array<StepInterface | ArrayItemStepInterface> {
         return this._steps
     }
 
-    getProcessInput<processedInputType = inputType | null>(): processedInputType | null {
-        return this.processedInput as processedInputType | null
+    getProcessInput<TProcessInput = TInput>(): TProcessInput | null {
+        return this.processedInput as TProcessInput | null
     }
 
-    public setSteps(steps: Array<StepInterface<unknown> | ArrayItemStepInterface<unknown>>): void {
+    public setSteps(steps: Array<StepInterface | ArrayItemStepInterface>): void {
         if (this._processingState === ProcessingState.Running) {
             throw new Error('Cannot change steps during run phase.')
         }
@@ -100,7 +100,7 @@ export abstract class GenericProcess<inputType = unknown> extends EventEmitter i
         }
         for (const stepName of arrayStepNames) {
             const arrayStepIdentifiers: string[] = this.steps
-                .filter((item): item is ArrayItemStepInterface<unknown> => this.implementsArrayItemStepInterface(item) && item.stepName === stepName)
+                .filter((item): item is ArrayItemStepInterface => this.implementsArrayItemStepInterface(item) && item.stepName === stepName)
                 .map(item => item.itemIdentifier)
             if (arrayStepIdentifiers.length !== [...new Set(arrayStepIdentifiers)].length) {
                 throw new Error(`Invalid argument steps, step ${stepName} contains duplicate itemIdentifier values.`)
@@ -116,16 +116,16 @@ export abstract class GenericProcess<inputType = unknown> extends EventEmitter i
         return this._processingState
     }
 
-    protected implementsStepInterface(input: unknown): input is StepInterface<unknown> {
-        return (input as StepInterface<unknown>).stepName !== undefined
+    protected implementsStepInterface(input: unknown): input is StepInterface {
+        return (input as StepInterface).stepName !== undefined
     }
 
     /**
      * @description Method that decides whether input implements StepInterface
      * @param input usually step
      */
-    protected implementsArrayItemStepInterface(input: unknown): input is ArrayItemStepInterface<unknown> {
-        return this.implementsStepInterface(input) && (input as ArrayItemStepInterface<unknown>).itemIdentifier !== undefined
+    protected implementsArrayItemStepInterface(input: unknown): input is ArrayItemStepInterface {
+        return this.implementsStepInterface(input) && (input as ArrayItemStepInterface).itemIdentifier !== undefined
     }
 
     /**
@@ -152,7 +152,7 @@ export abstract class GenericProcess<inputType = unknown> extends EventEmitter i
                     }
                 } else {
                     // retrieve dependency state for all items in array item steps
-                    const items = this.steps.filter(item => item.stepName === dependencyStepName) as Array<ArrayItemStepInterface<unknown>>
+                    const items = this.steps.filter(item => item.stepName === dependencyStepName) as Array<ArrayItemStepInterface>
                     dependencyState = await Promise.all(
                         items.map(
                             async (item) => {

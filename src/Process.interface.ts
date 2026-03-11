@@ -1,4 +1,4 @@
-export interface ProcessInterface<inputType = unknown> {
+export interface ProcessInterface<TInput = unknown> {
     run (throwError: boolean): Promise<void>
-    getProcessInput<processInputType = inputType | null> (): processInputType | null
+    getProcessInput<TProcessInput = TInput> (): TProcessInput | null
 }
