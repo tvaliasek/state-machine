@@ -1,4 +1,4 @@
-import { ArrayItemStepInterface, StepInterface } from './Step.interface'
+import { ArrayItemStepInterface, DependencyDeclaration, StepInterface } from './Step.interface'
 import { EventEmitter } from 'events'
 import { ProcessStateProviderInterface } from './ProcessStateProvider.interface'
 import { ProcessingState } from './ProcessingState.enum'
@@ -48,8 +48,8 @@ export abstract class GenericProcess<TInput = unknown> extends EventEmitter impl
         return this._steps
     }
 
-    getProcessInput<TProcessInput = TInput>(): TProcessInput | null {
-        return this.processedInput as TProcessInput | null
+    getProcessInput(): TInput | null {
+        return this.processedInput
     }
 
     public setSteps(steps: Array<StepInterface | ArrayItemStepInterface>): void {
@@ -60,7 +60,7 @@ export abstract class GenericProcess<TInput = unknown> extends EventEmitter impl
         this.checkStepsValidity()
     }
 
-    public async getStepState<TState extends Record<string, unknown> = Record<string, unknown>>(stepName: string): Promise<ProcessStepStateInterface<TState> | ProcessStepStateInterface<TState>[] | null> {
+    public async getStepState(stepName: string): Promise<ProcessStepStateInterface | ProcessStepStateInterface[] | null> {
         const isArrayStep = this.isArrayItemStep(stepName)
         const states = (await Promise.all(
             this._steps
@@ -72,11 +72,11 @@ export abstract class GenericProcess<TInput = unknown> extends EventEmitter impl
                         (this.implementsArrayItemStepInterface(item) ? item.itemIdentifier : null)
                     )
                 )
-        )).filter(item => item)
+        )).filter((item): item is ProcessStepStateInterface => item !== null)
         if (states.length === 0) {
             return null
         }
-        return (isArrayStep) ? states as ProcessStepStateInterface<TState>[] : states[0] as ProcessStepStateInterface<TState>
+        return isArrayStep ? states : states[0]
     }
 
     protected checkStepsValidity(): void {
@@ -116,16 +116,16 @@ export abstract class GenericProcess<TInput = unknown> extends EventEmitter impl
         return this._processingState
     }
 
-    protected implementsStepInterface(input: unknown): input is StepInterface {
-        return (input as StepInterface).stepName !== undefined
+    protected implementsStepInterface(input: StepInterface | ArrayItemStepInterface): input is StepInterface {
+        return 'stepName' in input
     }
 
     /**
-     * @description Method that decides whether input implements StepInterface
+     * @description Method that decides whether input implements ArrayItemStepInterface
      * @param input usually step
      */
-    protected implementsArrayItemStepInterface(input: unknown): input is ArrayItemStepInterface {
-        return this.implementsStepInterface(input) && (input as ArrayItemStepInterface).itemIdentifier !== undefined
+    protected implementsArrayItemStepInterface(input: StepInterface | ArrayItemStepInterface): input is ArrayItemStepInterface {
+        return 'itemIdentifier' in input
     }
 
     /**
@@ -137,7 +137,7 @@ export abstract class GenericProcess<TInput = unknown> extends EventEmitter impl
         return arraySteps.length > 0
     }
 
-    protected async resolveStepDependencies(dependsOn: Array<string | { stepName: string, itemIdentifier: string | null }>): Promise<Map<string, ProcessStepStateInterface | ProcessStepStateInterface[]>> {
+    protected async resolveStepDependencies(dependsOn: DependencyDeclaration): Promise<Map<string, ProcessStepStateInterface | ProcessStepStateInterface[]>> {
         const dependenciesStates: Array<[string, ProcessStepStateInterface | ProcessStepStateInterface[]]> = []
         for (const entry of dependsOn) {
             const dependencyStepName = (typeof entry === 'string') ? entry : entry.stepName
@@ -152,13 +152,13 @@ export abstract class GenericProcess<TInput = unknown> extends EventEmitter impl
                     }
                 } else {
                     // retrieve dependency state for all items in array item steps
-                    const items = this.steps.filter(item => item.stepName === dependencyStepName) as Array<ArrayItemStepInterface>
+                    const items = this.steps.filter((item): item is ArrayItemStepInterface => this.implementsArrayItemStepInterface(item) && item.stepName === dependencyStepName)
                     dependencyState = await Promise.all(
                         items.map(
                             async (item) => {
                                 const state = await this.stepStateProvider.getStepState(this.processName, item.stepName, item.itemIdentifier)
                                 if (!state || (!state.skipped && !state.success)) {
-                                    throw new Error(`Missing succeeded dependency state of step ${dependencyStepName}${(state?.itemIdentifier) ? `, item identifier: ${state.itemIdentifier}` : ''}`)
+                                    throw new Error(`Missing succeeded dependency state of step ${dependencyStepName}${(state?.itemIdentifier != null) ? `, item identifier: ${state.itemIdentifier}` : ''}`)
                                 }
                                 return state
                             }
@@ -185,69 +185,66 @@ export abstract class GenericProcess<TInput = unknown> extends EventEmitter impl
         this._processingState = ProcessingState.Running
         // iterate over steps
         for (const step of this._steps) {
-            // check common interface
-            if (this.implementsStepInterface(step)) {
-                // add reference to current process
-                step.setProcessReference(this)
-                // check if step is array item step type
-                const isArrayStep = this.implementsArrayItemStepInterface(step)
-                try {
-                    // load previous state from db / another source
-                    const stepState = await this.stepStateProvider.getStepState(
-                        this.processName,
-                        step.stepName,
-                        ((isArrayStep) ? step.itemIdentifier : null)
-                    )
-                    // hydrate previous state, if there is any
-                    if (stepState) {
-                        step.setInitialState(stepState)
-                    }
-                    // resolve and hydrate dependency datasets
-                    if (step.dependsOn.length > 0) {
-                        const dependenciesStates = await this.resolveStepDependencies(step.dependsOn)
-                        step.setStateOfDependencies(dependenciesStates)
-                    }
-                    this.emit('step-start', {
-                        processName: this.processName,
-                        stepName: step.stepName,
-                        itemIdentifier: ((isArrayStep) ? step.itemIdentifier : null)
-                    })
-                    // perform unit of work
-                    const state = await step.doWork()
-                    // save unit of work result
-                    await this.stepStateProvider.setStepState(
-                        this.processName,
-                        step.stepName,
-                        ((isArrayStep) ? step.itemIdentifier : null),
-                        state
-                    )
-                    this.emit('step-done', {
-                        processName: this.processName,
-                        stepName: step.stepName,
-                        itemIdentifier: ((isArrayStep) ? step.itemIdentifier : null),
-                        state
-                    })
-                } catch (error) {
-                    this._processingState = ProcessingState.Failed
-                    this._error = (error instanceof Error) ? error.message : `${error}`
-                    // save error state of step
-                    await this.stepStateProvider.setStepState(
-                        this.processName,
-                        step.stepName,
-                        ((isArrayStep) ? step.itemIdentifier : null),
-                        step.getStepResult()
-                    )
-                    this.emit('step-error', {
-                        processName: this.processName,
-                        stepName: step.stepName,
-                        itemIdentifier: ((isArrayStep) ? step.itemIdentifier : null),
-                        error
-                    })
-                    if (throwError) {
-                        throw error
-                    }
-                    break
+            // add reference to current process
+            step.setProcessReference(this)
+            // extract itemIdentifier with proper type narrowing
+            const itemIdentifier = this.implementsArrayItemStepInterface(step) ? step.itemIdentifier : null
+            try {
+                // load previous state from db / another source
+                const stepState = await this.stepStateProvider.getStepState(
+                    this.processName,
+                    step.stepName,
+                    itemIdentifier
+                )
+                // hydrate previous state, if there is any
+                if (stepState) {
+                    step.setInitialState(stepState)
                 }
+                // resolve and hydrate dependency datasets
+                if (step.dependsOn.length > 0) {
+                    const dependenciesStates = await this.resolveStepDependencies(step.dependsOn)
+                    step.setStateOfDependencies(dependenciesStates)
+                }
+                this.emit('step-start', {
+                    processName: this.processName,
+                    stepName: step.stepName,
+                    itemIdentifier
+                })
+                // perform unit of work
+                const state = await step.doWork()
+                // save unit of work result
+                await this.stepStateProvider.setStepState(
+                    this.processName,
+                    step.stepName,
+                    itemIdentifier,
+                    state
+                )
+                this.emit('step-done', {
+                    processName: this.processName,
+                    stepName: step.stepName,
+                    itemIdentifier,
+                    state
+                })
+            } catch (error) {
+                this._processingState = ProcessingState.Failed
+                this._error = (error instanceof Error) ? error.message : `${error}`
+                // save error state of step
+                await this.stepStateProvider.setStepState(
+                    this.processName,
+                    step.stepName,
+                    itemIdentifier,
+                    step.getStepResult()
+                )
+                this.emit('step-error', {
+                    processName: this.processName,
+                    stepName: step.stepName,
+                    itemIdentifier,
+                    error
+                })
+                if (throwError) {
+                    throw error
+                }
+                break
             }
         }
         if (this._processingState === ProcessingState.Running) {
@@ -259,64 +256,62 @@ export abstract class GenericProcess<TInput = unknown> extends EventEmitter impl
     /**
      * This method is used to run only specific step of process.
      * @param {string} stepName name of step
-     * @param {(string|number|null)} [itemIdentifier=null] identifier of specific item in case of array item step
+     * @param {(string|null)} [itemIdentifier=null] identifier of specific item in case of array item step
      * @param {boolean} [throwError=false] optional param which says whether to throw an exception
      * @returns {(Promise<ProcessStepStateInterface|null>)}
      * @memberof GenericProcess
      */
-    async runStep(stepName: string, itemIdentifier: string | number | null = null, throwError = false, additionalArguments: Record<string, unknown> | null = null): Promise<ProcessStepStateInterface | null> {
+    async runStep(stepName: string, itemIdentifier: string | null = null, throwError = false, additionalArguments: Record<string, unknown> | null = null): Promise<ProcessStepStateInterface | null> {
         for (const step of this._steps) {
-            // check common interface
-            if (this.implementsStepInterface(step)) {
-                // check if step is array item step type
-                const isArrayStep = this.implementsArrayItemStepInterface(step)
-                if (
-                    step.stepName === stepName
-                    && (!isArrayStep || (isArrayStep && step.itemIdentifier === itemIdentifier))
-                ) {
-                    // add reference to current process
-                    step.setProcessReference(this)
-                    try {
-                        // load previous state from db / another source
-                        const stepState = await this.stepStateProvider.getStepState(
-                            this.processName,
-                            step.stepName,
-                            ((isArrayStep) ? step.itemIdentifier : null)
-                        )
-                        // hydrate previous state, if there is any
-                        if (stepState) {
-                            step.setInitialState(stepState)
-                        }
-                        // resolve and hydrate dependency datasets
-                        if (step.dependsOn.length > 0) {
-                            const dependenciesStates = await this.resolveStepDependencies(step.dependsOn)
-                            step.setStateOfDependencies(dependenciesStates)
-                        }
-                        // perform unit of work
-                        const state = await step.doWork(additionalArguments ?? undefined)
-                        // save unit of work result
-                        await this.stepStateProvider.setStepState(
-                            this.processName,
-                            step.stepName,
-                            ((isArrayStep) ? step.itemIdentifier : null),
-                            state
-                        )
-                        return step.getStepResult()
-                    } catch (error) {
-                        this._processingState = ProcessingState.Failed
-                        this._error = (error instanceof Error) ? error.message : `${error}`
-                        // save error state of step
-                        await this.stepStateProvider.setStepState(
-                            this.processName,
-                            step.stepName,
-                            ((isArrayStep) ? step.itemIdentifier : null),
-                            step.getStepResult()
-                        )
-                        if (throwError) {
-                            throw error
-                        }
-                        return step.getStepResult()
+            // extract itemIdentifier with proper type narrowing
+            const stepItemIdentifier = this.implementsArrayItemStepInterface(step) ? step.itemIdentifier : null
+            const isArrayStep = stepItemIdentifier !== null
+            if (
+                step.stepName === stepName
+                && (!isArrayStep || stepItemIdentifier === itemIdentifier)
+            ) {
+                // add reference to current process
+                step.setProcessReference(this)
+                try {
+                    // load previous state from db / another source
+                    const stepState = await this.stepStateProvider.getStepState(
+                        this.processName,
+                        step.stepName,
+                        stepItemIdentifier
+                    )
+                    // hydrate previous state, if there is any
+                    if (stepState) {
+                        step.setInitialState(stepState)
                     }
+                    // resolve and hydrate dependency datasets
+                    if (step.dependsOn.length > 0) {
+                        const dependenciesStates = await this.resolveStepDependencies(step.dependsOn)
+                        step.setStateOfDependencies(dependenciesStates)
+                    }
+                    // perform unit of work
+                    const state = await step.doWork(additionalArguments ?? undefined)
+                    // save unit of work result
+                    await this.stepStateProvider.setStepState(
+                        this.processName,
+                        step.stepName,
+                        stepItemIdentifier,
+                        state
+                    )
+                    return step.getStepResult()
+                } catch (error) {
+                    this._processingState = ProcessingState.Failed
+                    this._error = (error instanceof Error) ? error.message : `${error}`
+                    // save error state of step
+                    await this.stepStateProvider.setStepState(
+                        this.processName,
+                        step.stepName,
+                        stepItemIdentifier,
+                        step.getStepResult()
+                    )
+                    if (throwError) {
+                        throw error
+                    }
+                    return step.getStepResult()
                 }
             }
         }

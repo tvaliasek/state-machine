@@ -1,14 +1,16 @@
 import { ProcessInterface } from './Process.interface'
 import { ProcessStepStateInterface } from './ProcessStepState.interface'
+import { DependencyDeclaration, DependencyStatesMap } from './Step.interface'
 
 /**
  * @classdesc Generic class representing step in finite state machine.
  * @template TState
+ * @template TDependencies
  */
-export abstract class GenericStep<TState extends Record<string, unknown> = Record<string, unknown>> {
+export abstract class GenericStep<TState extends Record<string, unknown> = Record<string, unknown>, TDependencies extends DependencyStatesMap = DependencyStatesMap> {
     protected _stepName: string
     protected _state: TState | null
-    protected _dependsOn: Array<string | { stepName: string, itemIdentifier: string | null }>
+    protected _dependsOn: DependencyDeclaration
     protected _success: boolean
     protected _skipped: boolean
     protected _disabled: boolean
@@ -19,7 +21,7 @@ export abstract class GenericStep<TState extends Record<string, unknown> = Recor
     constructor(
         stepName: string,
         state: TState | null = null,
-        dependsOn: Array<string | { stepName: string, itemIdentifier: string | null }> = [],
+        dependsOn: DependencyDeclaration = [],
         success = false,
         skipped = false,
         error: string | null = null,
@@ -43,7 +45,7 @@ export abstract class GenericStep<TState extends Record<string, unknown> = Recor
         return this._state
     }
 
-    get dependsOn(): Array<string | { stepName: string, itemIdentifier: string | null }> {
+    get dependsOn(): DependencyDeclaration {
         return this._dependsOn
     }
 
@@ -65,6 +67,10 @@ export abstract class GenericStep<TState extends Record<string, unknown> = Recor
 
     get stateOfDependencies(): Map<string, ProcessStepStateInterface | ProcessStepStateInterface[]> {
         return this._stateOfDependencies
+    }
+
+    getDependencyState<K extends string & keyof TDependencies>(stepName: K): TDependencies[K] | undefined {
+        return this._stateOfDependencies.get(stepName) as TDependencies[K] | undefined
     }
 
     get process(): ProcessInterface | null {

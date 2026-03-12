@@ -71,6 +71,7 @@ describe('GenericArrayStep basic implementation', () => {
             success: true,
             skipped: false,
             error: false,
+            errorMessage: null,
             itemIdentifier: 'someId',
             disabled: false
         })
@@ -91,6 +92,8 @@ describe('GenericArrayStep basic implementation', () => {
             success: true,
             skipped: false,
             error: false,
+            errorMessage: null,
+            itemIdentifier: null,
             disabled: false
         })).toThrow('Bad arguments: missing required identifier')
     })

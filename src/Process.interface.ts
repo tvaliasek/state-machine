@@ -1,4 +1,5 @@
 export interface ProcessInterface<TInput = unknown> {
+    readonly processName: string
     run (throwError: boolean): Promise<void>
-    getProcessInput<TProcessInput = TInput> (): TProcessInput | null
+    getProcessInput (): TInput | null
 }

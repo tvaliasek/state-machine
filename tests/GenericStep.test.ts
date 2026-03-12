@@ -155,6 +155,8 @@ describe('GenericStep basic implementation', () => {
             success: true,
             skipped: false,
             error: false,
+            errorMessage: null,
+            itemIdentifier: null,
             disabled: false
         }]]))
         expect(step.stateOfDependencies).toStrictEqual(
@@ -163,6 +165,8 @@ describe('GenericStep basic implementation', () => {
                 success: true,
                 skipped: false,
                 error: false,
+                errorMessage: null,
+                itemIdentifier: null,
                 disabled: false
             }]])
         )
@@ -182,6 +186,8 @@ describe('GenericStep basic implementation', () => {
             success: true,
             skipped: false,
             error: false,
+            errorMessage: null,
+            itemIdentifier: null,
             disabled: false
         })
         expect(step.getStepResult()).toEqual(
@@ -211,6 +217,8 @@ describe('GenericStep basic implementation', () => {
             success: false,
             skipped: false,
             error: false,
+            errorMessage: null,
+            itemIdentifier: null,
             disabled: false
         })
         expect(step.shouldRun()).toBe(true)
@@ -219,6 +227,8 @@ describe('GenericStep basic implementation', () => {
             success: true,
             skipped: false,
             error: false,
+            errorMessage: null,
+            itemIdentifier: null,
             disabled: false
         })
         expect(step.shouldRun()).toBe(false)
@@ -227,6 +237,8 @@ describe('GenericStep basic implementation', () => {
             success: false,
             skipped: true,
             error: false,
+            errorMessage: null,
+            itemIdentifier: null,
             disabled: false
         })
         expect(step.shouldRun()).toBe(false)
@@ -235,6 +247,8 @@ describe('GenericStep basic implementation', () => {
             success: true,
             skipped: true,
             error: false,
+            errorMessage: null,
+            itemIdentifier: null,
             disabled: false
         })
         step.onError('some error')

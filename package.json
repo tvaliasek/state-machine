@@ -1,6 +1,6 @@
 {
     "name": "@tvaliasek/state-machine",
-    "version": "2.0.3",
+    "version": "2.0.4",
     "description": "Very basic framework for building state machines.",
     "type": "module",
     "main": "./dist/index.cjs",

@@ -4,6 +4,6 @@ export interface ProcessStepStateInterface<TState extends Record<string, unknown
     skipped: boolean
     disabled: boolean
     error: boolean
-    errorMessage?: string | null
-    itemIdentifier?: string | null
+    errorMessage: string | null
+    itemIdentifier: string | null
 }
