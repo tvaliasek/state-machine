@@ -60,7 +60,7 @@ export abstract class GenericProcess<TInput = unknown> extends EventEmitter impl
         this.checkStepsValidity()
     }
 
-    public async getStepState(stepName: string): Promise<ProcessStepStateInterface | ProcessStepStateInterface[] | null> {
+    public async getStepState<TState extends Record<string, unknown> = Record<string, unknown>>(stepName: string): Promise<ProcessStepStateInterface<TState> | ProcessStepStateInterface<TState>[] | null> {
         const isArrayStep = this.isArrayItemStep(stepName)
         const states = (await Promise.all(
             this._steps
@@ -72,7 +72,7 @@ export abstract class GenericProcess<TInput = unknown> extends EventEmitter impl
                         (this.implementsArrayItemStepInterface(item) ? item.itemIdentifier : null)
                     )
                 )
-        )).filter((item): item is ProcessStepStateInterface => item !== null)
+        )).filter((item): item is ProcessStepStateInterface<TState> => item !== null)
         if (states.length === 0) {
             return null
         }
