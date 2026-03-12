@@ -18,8 +18,8 @@ export interface StepInterface<TState extends Record<string, unknown> = Record<s
     shouldRun(): boolean
     setStateOfDependencies(states: Map<string, ProcessStepStateInterface | ProcessStepStateInterface[]>): void
     setInitialState (stepState: ProcessStepStateInterface<TState>): void
-    onSuccess(state: TState | null): void
-    onSkipped(state: TState | null | undefined): void
+    onSuccess(state?: TState | null): void
+    onSkipped(state?: TState | null): void
     onError(errorMessage: string): void
     setProcessReference(process: ProcessInterface): void
     getStepResult (): ProcessStepStateInterface<TState>
